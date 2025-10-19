@@ -1,0 +1,59 @@
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Admin, AdminDocument } from '../admin/admin.schema';
+import * as bcrypt from 'bcryptjs';
+
+@Injectable()
+export class AuthService {
+  constructor(
+    @InjectModel(Admin.name) private adminModel: Model<AdminDocument>,
+    private jwtService: JwtService,
+  ) {}
+
+  validateAdmin(token: string): { isLoggedIn: boolean; user?: any } {
+    if (!token) {
+      throw new UnauthorizedException('Token not provided');
+    }
+
+    try {
+      const decodedToken = this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET,
+      });
+      return { isLoggedIn: true, user: decodedToken };
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+  }
+  async login(
+    email: string,
+    password: string,
+  ): Promise<{ access_token: string }> {
+    const user = await this.adminModel.findOne({
+      email,
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User with this email does not exist.');
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials.');
+    }
+
+    // Update last login time
+    await this.adminModel.updateOne(
+      { _id: user._id },
+      { $set: { lastLogin: new Date() } },
+    );
+
+    const payload = { id: user.id, email: user.email };
+    return {
+      access_token: await this.jwtService.signAsync(payload, {
+        expiresIn: '24h',
+      }),
+    };
+  }
+}
