@@ -37,8 +37,8 @@ interface AdminUser {
   id: string;
   email: string;
   role: string;
-  createdAt?: string;
-  lastLogin?: string;
+  createdAt?: Date;
+  lastLogin?: Date;
 }
 
 export default function AdminUsersPage() {
@@ -63,8 +63,8 @@ export default function AdminUsersPage() {
       id: "1",
       email: user?.email || "admin@feniangadgets.com",
       role: user?.role || "admin",
-      createdAt: user?.createdAt || new Date().toISOString().split("T")[0],
-      lastLogin: user?.lastLogin || "Never",
+      createdAt: new Date(),
+      lastLogin: new Date(),
     },
   ]);
 
@@ -112,8 +112,8 @@ export default function AdminUsersPage() {
         id: Date.now().toString(),
         email: newAdmin.email,
         role: newAdmin.role,
-        createdAt: new Date().toISOString().split("T")[0],
-        lastLogin: "Never",
+        createdAt: new Date(),
+        lastLogin: new Date(),
       };
 
       setAdminUsers((prev) => [...prev, newAdminUser]);
@@ -372,11 +372,11 @@ export default function AdminUsersPage() {
                         </div>
                         <div className="flex items-center space-x-1">
                           <Calendar className="h-3 w-3" />
-                          <span>Created: {admin.createdAt}</span>
+                          <span>Created: {admin.createdAt?.toLocaleDateString()}</span>
                         </div>
                         <div className="flex items-center space-x-1">
                           <Mail className="h-3 w-3" />
-                          <span>Last login: {admin.lastLogin}</span>
+                          <span>Last login: {admin.lastLogin?.toLocaleDateString()}</span>
                         </div>
                       </div>
                     </div>

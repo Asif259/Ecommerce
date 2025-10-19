@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ConditionalNavbar } from "@/components/ui/conditional-navbar";
+import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,6 +33,23 @@ export default function RootLayout({
       >
         <ConditionalNavbar />
         <main>{children}</main>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 3000,
+            style: {
+              background: "#FAF8F5",
+              color: "#3D3D3D",
+              border: "1px solid #D4C5B9",
+            },
+            success: {
+              iconTheme: {
+                primary: "#7F6244",
+                secondary: "#FAF8F5",
+              },
+            },
+          }}
+        />
       </body>
     </html>
   );

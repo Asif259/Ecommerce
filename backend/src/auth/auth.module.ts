@@ -16,7 +16,7 @@ import { Admin, AdminSchema } from '../admin/admin.schema';
     PassportModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'secretKey',
-      signOptions: { expiresIn: '1h' },
+      signOptions: { expiresIn: '24h' },
     }),
     MongooseModule.forFeature([{ name: Admin.name, schema: AdminSchema }]),
   ],

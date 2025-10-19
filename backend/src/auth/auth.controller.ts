@@ -29,9 +29,9 @@ export class AuthController {
     res.cookie('access_token', result.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax', // Changed from 'strict' to 'lax' for cross-origin
-      domain: 'localhost', // Set domain to localhost for cross-port access
-      maxAge: 3600000, // 1 hour in milliseconds
+      sameSite: 'lax', 
+      domain: 'localhost', 
+      maxAge: 86400000,
     });
 
     return { message: 'Login successful' };
@@ -46,7 +46,7 @@ export class AuthController {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       domain: 'localhost',
-      maxAge: 0, // Expire immediately
+      maxAge: 0, 
     });
 
     return { message: 'Logout successful' };

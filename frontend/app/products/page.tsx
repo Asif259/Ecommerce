@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -33,6 +34,7 @@ import {
 import { useClient } from "@/hooks/useClient";
 import { HomeBreadcrumb } from "@/components/ui/breadcrumbs";
 import { useCartStore } from "@/stores/cartStore";
+import { useFavoritesStore } from "@/stores/favoritesStore";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -54,6 +56,11 @@ export default function ProductsPage() {
   const [addedToCart, setAddedToCart] = useState<string | null>(null);
   const isClient = useClient();
   const { addItem } = useCartStore();
+  const {
+    addItem: addToFavorites,
+    removeItem: removeFromFavorites,
+    isFavorite,
+  } = useFavoritesStore();
 
   useEffect(() => {
     fetchData();
@@ -188,6 +195,24 @@ export default function ProductsPage() {
       );
       setAddedToCart(product._id);
       setTimeout(() => setAddedToCart(null), 2000);
+      toast.success(`${product.name} added to cart!`);
+    } else {
+      toast.error("Product is out of stock");
+    }
+  };
+
+  const handleToggleFavorite = (product: Product) => {
+    if (isFavorite(product._id)) {
+      removeFromFavorites(product._id);
+      toast.success(`${product.name} removed from favorites`);
+    } else {
+      addToFavorites({
+        _id: product._id,
+        name: product.name,
+        price: product.price,
+        images: product.images,
+      });
+      toast.success(`${product.name} added to favorites!`);
     }
   };
 
@@ -417,10 +442,15 @@ export default function ProductsPage() {
                       )}
                       <Button
                         size="sm"
-                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white hover:bg-[#FAF8F5] text-[#7F6244]"
+                        onClick={() => handleToggleFavorite(product)}
+                        className="absolute top-2 right-2 bg-white hover:bg-[#FAF8F5]"
                         variant="secondary"
                       >
-                        <Heart className="h-4 w-4" />
+                        <Heart
+                          className={`h-4 w-4 text-red-500 ${
+                            isFavorite(product._id) ? "fill-red-500" : ""
+                          }`}
+                        />
                       </Button>
                     </div>
                     <CardContent className="p-4 flex flex-col">
@@ -503,10 +533,15 @@ export default function ProductsPage() {
                           <div className="flex flex-col space-y-2">
                             <Button
                               size="sm"
+                              onClick={() => handleToggleFavorite(product)}
                               variant="outline"
-                              className="opacity-0 group-hover:opacity-100 transition-opacity border-[#D4C5B9] text-[#7F6244] hover:bg-[#FAF8F5]"
+                              className="border-[#D4C5B9] hover:bg-[#FAF8F5]"
                             >
-                              <Heart className="h-4 w-4" />
+                              <Heart
+                                className={`h-4 w-4 text-red-500 ${
+                                  isFavorite(product._id) ? "fill-red-500" : ""
+                                }`}
+                              />
                             </Button>
                             <Button
                               onClick={() => handleAddToCart(product)}

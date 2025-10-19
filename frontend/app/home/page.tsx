@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,20 +13,6 @@ import {
   ShoppingCart,
   Sparkles,
   Home as HomeIcon,
-  Flower,
-  Square,
-  Circle,
-  Flame,
-  Droplets,
-  Sofa,
-  Bed,
-  Lamp,
-  UtensilsCrossed,
-  Bath,
-  PaintBucket,
-  Frame,
-  Clock,
-  Armchair,
   Palette,
   Truck,
   RotateCcw,
@@ -42,19 +29,25 @@ import Link from "next/link";
 import {
   getProducts,
   getFeaturedProducts,
-  getCategories,
+  getProductsByCategory,
   Product,
 } from "@/utils/products";
+import {
+  getCategories as getCategoriesAPI,
+  Category,
+} from "@/utils/categories";
 import { useClient } from "@/hooks/useClient";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCartStore } from "@/stores/cartStore";
+import { useFavoritesStore } from "@/stores/favoritesStore";
 
 export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<
-    { category: string; count: number }[]
-  >([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryProductCounts, setCategoryProductCounts] = useState<
+    Record<string, number>
+  >({});
   const [loading, setLoading] = useState(true);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [autoPlay, setAutoPlay] = useState(true);
@@ -62,6 +55,11 @@ export default function HomePage() {
   const isClient = useClient();
   const testimonialRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const { addItem } = useCartStore();
+  const {
+    addItem: addToFavorites,
+    removeItem: removeFromFavorites,
+    isFavorite,
+  } = useFavoritesStore();
 
   useEffect(() => {
     fetchData();
@@ -87,12 +85,35 @@ export default function HomePage() {
         await Promise.all([
           getProducts({ limit: 12, isActive: true }),
           getFeaturedProducts(8),
-          getCategories(),
+          getCategoriesAPI(),
         ]);
 
       setProducts(allProductsResponse.products);
       setFeaturedProducts(featuredResponse.products || featuredResponse);
-      setCategories(categoriesData.slice(0, 8));
+
+      // Take first 8 categories for homepage
+      const limitedCategories = categoriesData.slice(0, 8);
+      setCategories(limitedCategories);
+
+      // Fetch product counts for each category
+      const countPromises = limitedCategories.map(async (cat) => {
+        try {
+          const response = await getProductsByCategory(cat.name);
+          return {
+            categoryName: cat.name,
+            count: response?.total || response?.products?.length || 0,
+          };
+        } catch (error) {
+          return { categoryName: cat.name, count: 0 };
+        }
+      });
+
+      const resolvedCounts = await Promise.all(countPromises);
+      const countsMap: Record<string, number> = {};
+      resolvedCounts.forEach(({ categoryName, count }) => {
+        countsMap[categoryName] = count;
+      });
+      setCategoryProductCounts(countsMap);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
@@ -114,59 +135,25 @@ export default function HomePage() {
       );
       setAddedToCart(product._id);
       setTimeout(() => setAddedToCart(null), 2000);
+      toast.success(`${product.name} added to cart!`);
+    } else {
+      toast.error("Product is out of stock");
     }
   };
 
-  const getCategoryIcon = (categoryName: string) => {
-    const iconMap: Record<string, any> = {
-      furniture: Sofa,
-      bedroom: Bed,
-      lighting: Lamp,
-      kitchen: UtensilsCrossed,
-      bathroom: Bath,
-      "wall decor": Frame,
-      "wall art": Frame,
-      rugs: Square,
-      pillows: Square,
-      cushions: Square,
-      mirrors: Circle,
-      candles: Flame,
-      vases: Droplets,
-      flowers: Flower,
-      plants: Flower,
-      clocks: Clock,
-      accessories: Sparkles,
-      textiles: Square,
-      decor: HomeIcon,
-      living: Armchair,
-      dining: UtensilsCrossed,
-      office: Lamp,
-      outdoor: Flower,
-      art: Palette,
-      default: HomeIcon,
-    };
-
-    const normalizedName = categoryName.toLowerCase();
-    for (const [key, icon] of Object.entries(iconMap)) {
-      if (normalizedName.includes(key)) {
-        return icon;
-      }
+  const handleToggleFavorite = (product: Product) => {
+    if (isFavorite(product._id)) {
+      removeFromFavorites(product._id);
+      toast.success(`${product.name} removed from favorites`);
+    } else {
+      addToFavorites({
+        _id: product._id,
+        name: product.name,
+        price: product.price,
+        images: product.images,
+      });
+      toast.success(`${product.name} added to favorites!`);
     }
-    return iconMap.default;
-  };
-
-  const getCategoryColor = (index: number) => {
-    const colors = [
-      "bg-gradient-to-br from-[#9CA986]/20 to-[#9CA986]/10",
-      "bg-gradient-to-br from-[#D4C5B9]/30 to-[#D4C5B9]/20",
-      "bg-gradient-to-br from-[#9CA986]/15 to-[#9CA986]/5",
-      "bg-gradient-to-br from-[#D4C5B9]/25 to-[#D4C5B9]/15",
-      "bg-gradient-to-br from-[#9CA986]/25 to-[#9CA986]/15",
-      "bg-gradient-to-br from-[#D4C5B9]/35 to-[#D4C5B9]/25",
-      "bg-gradient-to-br from-[#9CA986]/30 to-[#9CA986]/20",
-      "bg-gradient-to-br from-[#D4C5B9]/20 to-[#D4C5B9]/10",
-    ];
-    return colors[index % colors.length];
   };
 
   const testimonials = [
@@ -213,109 +200,126 @@ export default function HomePage() {
         )}
       </AnimatePresence>
 
-      {/* Enhanced Hero Section with Framer Motion */}
+      {/* Enhanced Hero Section with Landscape Design */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6 }}
         className="relative bg-[#FAF8F5] overflow-hidden"
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-[#FAF8F5] via-transparent to-[#FAF8F5]/80 z-0" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-left z-10"
-            >
-              <div className="inline-flex items-center px-4 py-2 bg-[#9CA986]/10 rounded-full text-[#7F6244] text-sm font-medium mb-6 border border-[#9CA986]/20 backdrop-blur-sm">
-                <Sparkles className="w-4 h-4 mr-2" />
-                Transform Your Space
-              </div>
-              <h1 className="text-5xl lg:text-7xl font-bold text-[#3D3D3D] mb-6 leading-tight">
-                Home Decor
-                <br />
-                <span className="text-[#7F6244] bg-gradient-to-r from-[#7F6244] to-[#9CA986] bg-clip-text text-transparent">
-                  And More
-                </span>
-              </h1>
-              <p className="text-xl text-[#5A5A5A] mb-8 leading-relaxed max-w-lg">
-                Discover curated collections that transform houses into homes.
-                From elegant furniture to stunning accents, find everything you
-                need to express your style.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/products">
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Button
-                      size="lg"
-                      className="bg-[#7F6244] hover:bg-[#6B5139] text-white px-8 shadow-lg hover:shadow-xl transition-all duration-300 group"
-                    >
-                      Shop Collection
-                      <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                  </motion.div>
-                </Link>
-                <Link href="/category">
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      className="border-2 border-[#7F6244] text-[#7F6244] hover:bg-[#9CA986]/10 hover:border-[#9CA986] transition-all duration-300"
-                    >
-                      Browse Rooms
-                    </Button>
-                  </motion.div>
-                </Link>
-              </div>
-              <div className="grid grid-cols-3 gap-6 mt-12 pt-8 border-t border-[#D4C5B9]/30">
-                <div>
-                  <div className="text-3xl font-bold text-[#3D3D3D]">10K+</div>
-                  <div className="text-sm text-[#8B7E6A]">Products</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-bold text-[#3D3D3D]">50K+</div>
-                  <div className="text-sm text-[#8B7E6A]">Happy Homes</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-bold text-[#3D3D3D]">4.9★</div>
-                  <div className="text-sm text-[#8B7E6A]">Rating</div>
-                </div>
-              </div>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="relative lg:block"
-            >
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl group">
-                <img
-                  src="/hero-image.png"
-                  alt="Home Decor And More - Beautiful Interior"
-                  className="w-full h-[600px] object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#3D3D3D]/20 to-transparent"></div>
-                <div className="absolute bottom-6 left-6 right-6 p-4 bg-white/90 backdrop-blur-sm rounded-xl transform translate-y-0 group-hover:translate-y-[-10px] transition-all duration-300">
-                  <p className="text-sm font-semibold text-[#3D3D3D]">
-                    Modern Living Room Set
+        {/* Landscape Hero Image Container */}
+        <div className="relative w-full h-[calc(100vh-4rem)]">
+          {/* Hero Image */}
+          <img
+            src="/hero-image.png"
+            alt="Home Decor And More - Beautiful Interior"
+            className="w-full h-full object-cover"
+          />
+
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#3D3D3D]/80 via-[#3D3D3D]/50 to-transparent" />
+
+          {/* Content Overlay */}
+          <div className="absolute inset-0 flex items-center">
+            <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+              <div className="max-w-3xl">
+                <motion.div
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.2 }}
+                  className="text-left"
+                >
+                  <div className="inline-flex items-center px-4 py-2 bg-white/10 rounded-full text-white text-sm font-medium mb-6 border border-white/20 backdrop-blur-sm">
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Transform Your Space
+                  </div>
+                  <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-white mb-6 leading-tight">
+                    Home Decor And More
+                  </h1>
+                  <p className="text-lg lg:text-xl text-white/90 mb-8 leading-relaxed">
+                    Discover curated collections that transform houses into
+                    homes. From elegant furniture to stunning accents, find
+                    everything you need to express your style.
                   </p>
-                  <p className="text-xs text-[#8B7E6A]">Starting at ৳1,299</p>
-                </div>
+                  <div className="flex flex-col sm:flex-row gap-4 mb-8">
+                    <Link href="/products">
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <Button
+                          size="lg"
+                          className="bg-[#7F6244] hover:bg-[#6B5139] text-white px-8 shadow-lg hover:shadow-xl transition-all duration-300 group"
+                        >
+                          Shop Collection
+                          <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                      </motion.div>
+                    </Link>
+                    <Link href="/category">
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <Button
+                          size="lg"
+                          variant="outline"
+                          className="border-2 border-white text-white hover:bg-white/10 hover:border-white transition-all duration-300 backdrop-blur-sm"
+                        >
+                          Browse Rooms
+                        </Button>
+                      </motion.div>
+                    </Link>
+                  </div>
+                  <div className="grid grid-cols-3 gap-6 pt-6 border-t border-white/20">
+                    <div>
+                      <div className="text-2xl lg:text-3xl font-bold text-white">
+                        10K+
+                      </div>
+                      <div className="text-xs lg:text-sm text-white/80">
+                        Products
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-2xl lg:text-3xl font-bold text-white">
+                        50K+
+                      </div>
+                      <div className="text-xs lg:text-sm text-white/80">
+                        Happy Homes
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-2xl lg:text-3xl font-bold text-white">
+                        4.9★
+                      </div>
+                      <div className="text-xs lg:text-sm text-white/80">
+                        Rating
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
               </div>
-            </motion.div>
+            </div>
           </div>
+
+          {/* Featured Product Badge */}
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="absolute bottom-6 right-6 hidden lg:block"
+          >
+            <div className="p-4 bg-white/90 backdrop-blur-sm rounded-xl shadow-xl max-w-xs">
+              <p className="text-sm font-semibold text-[#3D3D3D]">
+                Modern Living Room Set
+              </p>
+              <p className="text-xs text-[#8B7E6A]">Starting at ৳1,299</p>
+            </div>
+          </motion.div>
         </div>
       </motion.div>
 
-      {/* Enhanced Categories Section with Framer Motion */}
+      {/* Enhanced Categories Section with Images */}
       <motion.div
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -333,47 +337,56 @@ export default function HomePage() {
             </p>
             <div className="mt-6 flex justify-center">
               <Link href="/category">
-                <Button
-                  className="bg-[#7F6244] text-white hover:bg-[#6B5139] transition-colors font-semibold px-6 py-2 rounded-lg"
-                  onClick={() => {
-                    // Client-side navigation is handled by <Link>
-                  }}
-                >
+                <Button className="bg-[#7F6244] text-white hover:bg-[#6B5139] transition-colors font-semibold px-6 py-2 rounded-lg">
                   View All Categories
                 </Button>
               </Link>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-6">
             {isClient &&
-              categories.map((categoryData, index) => {
-                const IconComponent = getCategoryIcon(categoryData.category);
+              categories.map((category, index) => {
+                const productCount = categoryProductCounts[category.name] || 0;
                 return (
-                  <div key={index} className="category-card">
-                    <Link
-                      href={`/category/${encodeURIComponent(
-                        categoryData.category
-                      )}`}
-                      className="text-center group block"
-                    >
-                      <motion.div
-                        whileHover={{ scale: 1.1, rotate: 5 }}
-                        whileTap={{ scale: 0.95 }}
-                        className={`w-24 h-24 ${getCategoryColor(
-                          index
-                        )} rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:shadow-lg transition-all duration-300`}
-                      >
-                        <IconComponent className="h-10 w-10 text-[#7F6244] group-hover:scale-110 transition-transform" />
-                      </motion.div>
-                      <p className="text-sm font-semibold text-[#3D3D3D] group-hover:text-[#7F6244] transition-colors">
-                        {categoryData.category}
-                      </p>
-                      <p className="text-xs text-[#8B7E6A]">
-                        {categoryData.count} items
-                      </p>
+                  <motion.div
+                    key={category._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                  >
+                    <Link href="/category" className="group block">
+                      <Card className="overflow-hidden border border-[#D4C5B9]/20 hover:border-[#9CA986]/50 transition-all duration-300 hover:shadow-2xl">
+                        <div className="relative h-48 overflow-hidden">
+                          <img
+                            src={
+                              category.heroImage || "/placeholder-category.jpg"
+                            }
+                            alt={category.name}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                          <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                            <h3 className="font-bold text-lg mb-1">
+                              {category.name}
+                            </h3>
+                            <p className="text-sm text-white/90">
+                              {productCount}{" "}
+                              {productCount === 1 ? "item" : "items"}
+                            </p>
+                          </div>
+                          {category.description && (
+                            <div className="absolute top-0 left-0 right-0 p-3 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              <p className="text-white text-xs line-clamp-2">
+                                {category.description}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </Card>
                     </Link>
-                  </div>
+                  </motion.div>
                 );
               })}
           </div>
@@ -490,10 +503,15 @@ export default function HomePage() {
                       )}
                       <Button
                         size="sm"
-                        className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-white/90 backdrop-blur-sm hover:bg-white text-[#7F6244] rounded-full w-10 h-10 p-0 shadow-lg hover:scale-110"
+                        onClick={() => handleToggleFavorite(product)}
+                        className="absolute top-3 right-3 transition-all duration-300 bg-white/90 backdrop-blur-sm hover:bg-white rounded-full w-10 h-10 p-0 shadow-lg hover:scale-110"
                         variant="secondary"
                       >
-                        <Heart className="h-5 w-5" />
+                        <Heart
+                          className={`h-5 w-5 text-red-500 ${
+                            isFavorite(product._id) ? "fill-red-500" : ""
+                          }`}
+                        />
                       </Button>
                     </div>
                     <CardContent className="p-5">

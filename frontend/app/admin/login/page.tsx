@@ -116,9 +116,8 @@ export default function AdminLoginPage() {
 
             <Button
               type="submit"
-              className="w-full bg-[#7F6244] hover:bg-[#6B5139] text-white"
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white"
               disabled={isLoading || !isApiConfigured}
-              // omit variant so custom bg applies directly
             >
               {isLoading ? "Logging in..." : "Login"}
             </Button>
