@@ -51,10 +51,10 @@ export default function SettingsPage() {
       systemUpdates: false,
     },
     store: {
-      storeName: "Fenian Gadgets",
-      storeDescription: "Premium electronics and gadgets store",
-      currency: "USD",
-      timezone: "UTC",
+      storeName: "Home Decor & More",
+      storeDescription: "Beautiful home decor, furniture, and accessories",
+      currency: "BDT",
+      timezone: "Asia/Dhaka",
     },
     security: {
       twoFactorAuth: false,
@@ -196,9 +196,7 @@ export default function SettingsPage() {
       <div className="mb-8">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Settings
-            </h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Settings</h1>
             <p className="text-gray-600">
               Manage your profile and store settings
             </p>

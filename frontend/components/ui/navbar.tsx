@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   Home,
@@ -21,8 +21,10 @@ import { useCartStore } from "@/stores/cartStore";
 import { useFavoritesStore } from "@/stores/favoritesStore";
 import { CartDrawer } from "./cart-drawer";
 import { FavoritesDrawer } from "./favorites-drawer";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useProductSearch } from "@/hooks/useProductSearch";
+import { SearchSuggestions } from "./search-suggestions";
 
 interface NavbarProps {
   className?: string;
@@ -30,6 +32,7 @@ interface NavbarProps {
 
 export function Navbar({ className }: NavbarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -39,6 +42,22 @@ export function Navbar({ className }: NavbarProps) {
   const { getItemCount: getFavoritesCount } = useFavoritesStore();
   const itemCount = mounted ? getItemCount() : 0;
   const favoritesCount = mounted ? getFavoritesCount() : 0;
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQueryMobile, setSearchQueryMobile] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showSuggestionsMobile, setShowSuggestionsMobile] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [selectedIndexMobile, setSelectedIndexMobile] = useState(-1);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const searchRefMobile = useRef<HTMLDivElement>(null);
+
+  // Use search hook for both desktop and mobile
+  const { products: searchResults, loading: searchLoading } =
+    useProductSearch(searchQuery);
+  const { products: searchResultsMobile, loading: searchLoadingMobile } =
+    useProductSearch(searchQueryMobile);
 
   useEffect(() => {
     setMounted(true);
@@ -57,6 +76,164 @@ export function Navbar({ className }: NavbarProps) {
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [pathname]);
+
+  // Clear search on route change
+  useEffect(() => {
+    setSearchQuery("");
+    setSearchQueryMobile("");
+    setShowSuggestions(false);
+    setShowSuggestionsMobile(false);
+  }, [pathname]);
+
+  // Show suggestions when search results are available
+  useEffect(() => {
+    if (searchQuery.length >= 2) {
+      setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
+    }
+  }, [searchQuery, searchResults]);
+
+  useEffect(() => {
+    if (searchQueryMobile.length >= 2) {
+      setShowSuggestionsMobile(true);
+    } else {
+      setShowSuggestionsMobile(false);
+    }
+  }, [searchQueryMobile, searchResultsMobile]);
+
+  // Handle click outside to close suggestions
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+      if (
+        searchRefMobile.current &&
+        !searchRefMobile.current.contains(event.target as Node)
+      ) {
+        setShowSuggestionsMobile(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Search handlers
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setSelectedIndex(-1);
+  };
+
+  const handleSearchChangeMobile = (value: string) => {
+    setSearchQueryMobile(value);
+    setSelectedIndexMobile(-1);
+  };
+
+  const handleProductClick = (productId: string) => {
+    setShowSuggestions(false);
+    setSearchQuery("");
+    router.push(`/products/${productId}`);
+  };
+
+  const handleProductClickMobile = (productId: string) => {
+    setShowSuggestionsMobile(false);
+    setSearchQueryMobile("");
+    setIsMobileMenuOpen(false);
+    router.push(`/products/${productId}`);
+  };
+
+  const handleSearchSubmit = (query: string) => {
+    if (query.trim()) {
+      setShowSuggestions(false);
+      router.push(`/products?search=${encodeURIComponent(query.trim())}`);
+    }
+  };
+
+  const handleSearchSubmitMobile = (query: string) => {
+    if (query.trim()) {
+      setShowSuggestionsMobile(false);
+      setIsMobileMenuOpen(false);
+      router.push(`/products?search=${encodeURIComponent(query.trim())}`);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!showSuggestions || searchResults.length === 0) {
+      if (e.key === "Enter") {
+        handleSearchSubmit(searchQuery);
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setSelectedIndex((prev) =>
+          prev < searchResults.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : -1));
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (selectedIndex >= 0 && searchResults[selectedIndex]) {
+          handleProductClick(searchResults[selectedIndex]._id);
+        } else {
+          handleSearchSubmit(searchQuery);
+        }
+        break;
+      case "Escape":
+        setShowSuggestions(false);
+        setSelectedIndex(-1);
+        break;
+    }
+  };
+
+  const handleKeyDownMobile = (e: React.KeyboardEvent) => {
+    if (!showSuggestionsMobile || searchResultsMobile.length === 0) {
+      if (e.key === "Enter") {
+        handleSearchSubmitMobile(searchQueryMobile);
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setSelectedIndexMobile((prev) =>
+          prev < searchResultsMobile.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setSelectedIndexMobile((prev) => (prev > 0 ? prev - 1 : -1));
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (
+          selectedIndexMobile >= 0 &&
+          searchResultsMobile[selectedIndexMobile]
+        ) {
+          handleProductClickMobile(
+            searchResultsMobile[selectedIndexMobile]._id
+          );
+        } else {
+          handleSearchSubmitMobile(searchQueryMobile);
+        }
+        break;
+      case "Escape":
+        setShowSuggestionsMobile(false);
+        setSelectedIndexMobile(-1);
+        break;
+    }
+  };
 
   const navItems = [
     {
@@ -148,11 +325,27 @@ export function Navbar({ className }: NavbarProps) {
 
             {/* Search Bar - Desktop */}
             <div className="hidden lg:flex flex-1 max-w-md mx-6">
-              <div className="relative w-full group">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#8B7E6A] group-focus-within:text-[#7F6244] transition-colors" />
+              <div className="relative w-full group" ref={searchRef}>
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#8B7E6A] group-focus-within:text-[#7F6244] transition-colors z-10" />
                 <Input
                   placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  onFocus={() => {
+                    if (searchQuery.length >= 2) {
+                      setShowSuggestions(true);
+                    }
+                  }}
                   className="pl-10 pr-4 h-10 bg-white/95 backdrop-blur-sm text-[#3D3D3D] border-[#D4C5B9] focus:border-[#7F6244] focus:ring-2 focus:ring-[#7F6244]/20 rounded-lg transition-all duration-200 hover:bg-white"
+                />
+                <SearchSuggestions
+                  products={searchResults}
+                  loading={searchLoading}
+                  query={searchQuery}
+                  isOpen={showSuggestions}
+                  onProductClick={handleProductClick}
+                  selectedIndex={selectedIndex}
                 />
               </div>
             </div>
@@ -273,11 +466,27 @@ export function Navbar({ className }: NavbarProps) {
                   transition={{ delay: navItems.length * 0.1 }}
                   className="pt-3"
                 >
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#8B7E6A]" />
+                  <div className="relative" ref={searchRefMobile}>
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#8B7E6A] z-10" />
                     <Input
                       placeholder="Search products..."
+                      value={searchQueryMobile}
+                      onChange={(e) => handleSearchChangeMobile(e.target.value)}
+                      onKeyDown={handleKeyDownMobile}
+                      onFocus={() => {
+                        if (searchQueryMobile.length >= 2) {
+                          setShowSuggestionsMobile(true);
+                        }
+                      }}
                       className="pl-10 pr-4 h-11 bg-white/95 text-[#3D3D3D] border-[#D4C5B9] focus:border-[#7F6244] focus:ring-2 focus:ring-[#7F6244]/20 rounded-lg"
+                    />
+                    <SearchSuggestions
+                      products={searchResultsMobile}
+                      loading={searchLoadingMobile}
+                      query={searchQueryMobile}
+                      isOpen={showSuggestionsMobile}
+                      onProductClick={handleProductClickMobile}
+                      selectedIndex={selectedIndexMobile}
                     />
                   </div>
                 </motion.div>

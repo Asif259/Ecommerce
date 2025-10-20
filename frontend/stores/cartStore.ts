@@ -20,7 +20,7 @@ interface CartState {
   getTotal: () => number;
 }
 
-const CART_STORAGE_KEY = "fenian-gadgets-cart";
+const CART_STORAGE_KEY = "homedecor-more-cart";
 
 // Helper function to load cart from localStorage
 const loadCartFromStorage = (): CartItem[] => {

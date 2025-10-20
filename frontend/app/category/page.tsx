@@ -24,6 +24,7 @@ import { getCategories, Category } from "@/utils/categories";
 import { useClient } from "@/hooks/useClient";
 import { HomeBreadcrumb } from "@/components/ui/breadcrumbs";
 import { motion } from "framer-motion";
+import { Footer } from "@/components/ui/footer";
 
 export default function CategoryPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -34,9 +35,6 @@ export default function CategoryPage() {
     Record<string, number>
   >({});
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
-    null
-  );
   const isClient = useClient();
 
   useEffect(() => {
@@ -87,22 +85,10 @@ export default function CategoryPage() {
   };
 
   const handleCategoryClick = (category: Category) => {
-    const newCategory =
-      selectedCategory?._id === category._id ? null : category;
-    setSelectedCategory(newCategory);
-
-    // Scroll to category detail card when a category is selected
-    if (newCategory) {
-      setTimeout(() => {
-        const detailCard = document.getElementById("category-detail-card");
-        if (detailCard) {
-          detailCard.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          });
-        }
-      }, 100);
-    }
+    // Redirect to products page with category filter
+    window.location.href = `/products?category=${encodeURIComponent(
+      category.name
+    )}`;
   };
 
   return (
@@ -135,7 +121,7 @@ export default function CategoryPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-24 py-12">
         {loading ? (
           <div className="text-center py-20">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#7F6244]"></div>
@@ -162,7 +148,6 @@ export default function CategoryPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {isClient &&
                   categories.map((category, index) => {
-                    const isSelected = selectedCategory?._id === category._id;
                     const productCount =
                       categoryProductCounts[category.name] || 0;
 
@@ -175,11 +160,7 @@ export default function CategoryPage() {
                       >
                         <Card
                           id="category-card"
-                          className={`cursor-pointer transition-all duration-300 hover:shadow-2xl border overflow-hidden group ${
-                            isSelected
-                              ? "ring-2 ring-[#7F6244] shadow-2xl border-[#7F6244] transform scale-105"
-                              : "border-[#D4C5B9]/20 hover:border-[#9CA986]/50"
-                          }`}
+                          className="cursor-pointer transition-all duration-300 hover:shadow-2xl border overflow-hidden group border-[#D4C5B9]/20 hover:border-[#9CA986]/50"
                           onClick={() => handleCategoryClick(category)}
                         >
                           <div className="relative h-48 overflow-hidden">
@@ -189,11 +170,7 @@ export default function CategoryPage() {
                                 "/placeholder-category.jpg"
                               }
                               alt={category.name}
-                              className={`w-full h-full object-cover transition-transform duration-500 ${
-                                isSelected
-                                  ? "scale-110"
-                                  : "group-hover:scale-110"
-                              }`}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
                             <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
@@ -205,11 +182,6 @@ export default function CategoryPage() {
                                   {productCount}{" "}
                                   {productCount === 1 ? "product" : "products"}
                                 </p>
-                                {isSelected && (
-                                  <Badge className="bg-white text-[#7F6244] hover:bg-white">
-                                    Selected
-                                  </Badge>
-                                )}
                               </div>
                             </div>
                             {category.description && (
@@ -227,147 +199,6 @@ export default function CategoryPage() {
               </div>
             </div>
           </>
-        )}
-
-        {/* Selected Category Details & Products */}
-        {selectedCategory && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="mb-12"
-          >
-            {/* Category Detail Card */}
-            <Card
-              className="mb-8 border-[#9CA986]/30 bg-gradient-to-r from-white to-[#FAF8F5]"
-              id="category-detail-card"
-            >
-              <CardContent className="p-8">
-                <div className="grid md:grid-cols-2 gap-8 items-center">
-                  <div>
-                    <div className="flex items-center mb-4">
-                      <Badge className="bg-[#7F6244] text-white mr-3">
-                        Featured Category
-                      </Badge>
-                    </div>
-                    <h3 className="text-3xl font-bold text-[#3D3D3D] mb-4">
-                      {selectedCategory.name}
-                    </h3>
-                    {selectedCategory.description && (
-                      <p className="text-[#5A5A5A] text-lg mb-6 leading-relaxed">
-                        {selectedCategory.description}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-4 mb-6">
-                      <div className="flex items-center gap-2">
-                        <Package className="h-5 w-5 text-[#7F6244]" />
-                        <span className="text-[#5A5A5A]">
-                          {categoryProductCounts[selectedCategory.name] || 0}{" "}
-                          Products
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Star className="h-5 w-5 text-[#D4C5B9] fill-current" />
-                        <span className="text-[#5A5A5A]">Top Rated</span>
-                      </div>
-                    </div>
-                    <Link
-                      href={`/products?category=${encodeURIComponent(
-                        selectedCategory.name
-                      )}`}
-                    >
-                      <Button className="bg-[#7F6244] hover:bg-[#6B5139] text-white">
-                        View All Products
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    </Link>
-                  </div>
-                  <div className="relative h-64 md:h-80 rounded-xl overflow-hidden shadow-2xl">
-                    <img
-                      src={
-                        selectedCategory.heroImage ||
-                        "/placeholder-category.jpg"
-                      }
-                      alt={selectedCategory.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Products in Category */}
-            <div>
-              <h4 className="text-2xl font-bold text-[#3D3D3D] mb-6">
-                Featured Products in {selectedCategory.name}
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {isClient &&
-                  categoryProducts[selectedCategory.name]?.map((product) => (
-                    <motion.div
-                      key={product._id}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <Link href={`/products/${product._id}`}>
-                        <Card className="group hover:shadow-2xl transition-all duration-300 border border-[#D4C5B9]/20 hover:border-[#9CA986]/50 cursor-pointer">
-                          <div className="aspect-square overflow-hidden rounded-t-lg relative">
-                            {product.images && product.images.length > 0 ? (
-                              <img
-                                src={product.images[0]}
-                                alt={product.name}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-gradient-to-br from-[#FAF8F5] to-[#D4C5B9]/20 flex items-center justify-center">
-                                <Package className="h-16 w-16 text-[#9CA986]" />
-                              </div>
-                            )}
-                            {product.discount > 0 && (
-                              <Badge className="absolute top-3 left-3 bg-gradient-to-r from-[#8B7E6A] to-[#7F6244] text-white border-0">
-                                -{product.discount}% OFF
-                              </Badge>
-                            )}
-                            <Button
-                              size="sm"
-                              className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-white/90 backdrop-blur-sm hover:bg-white text-[#7F6244] rounded-full w-10 h-10 p-0"
-                              variant="secondary"
-                              onClick={(e) => e.preventDefault()}
-                            >
-                              <Heart className="h-5 w-5" />
-                            </Button>
-                          </div>
-                          <CardContent className="p-5">
-                            <h4 className="font-semibold text-base mb-2 line-clamp-2 text-[#3D3D3D] group-hover:text-[#7F6244] transition-colors">
-                              {product.name}
-                            </h4>
-                            <div className="flex items-center justify-between mb-4">
-                              <p className="text-2xl font-bold text-[#3D3D3D]">
-                                ৳{product.price.toFixed(2)}
-                              </p>
-                              <div className="flex items-center">
-                                <Star className="h-4 w-4 text-[#D4C5B9] fill-current" />
-                                <span className="ml-1 text-sm font-medium text-[#5A5A5A]">
-                                  {product.rating.toFixed(1)}
-                                </span>
-                              </div>
-                            </div>
-                            <Button
-                              className="w-full bg-gradient-to-r from-[#7F6244] to-[#9CA986] hover:from-[#6B5139] hover:to-[#8B7E6A] text-white font-semibold"
-                              onClick={(e) => e.preventDefault()}
-                            >
-                              Add to Cart
-                            </Button>
-                          </CardContent>
-                        </Card>
-                      </Link>
-                    </motion.div>
-                  ))}
-              </div>
-            </div>
-          </motion.div>
         )}
 
         {/* Category Stats */}
@@ -431,6 +262,8 @@ export default function CategoryPage() {
           </motion.div>
         )}
       </div>
+
+      <Footer />
     </div>
   );
 }

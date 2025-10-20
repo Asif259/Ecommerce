@@ -54,21 +54,32 @@ export default function ProductDetailPage() {
         const productData = await getProduct(productId);
         setProduct(productData);
 
-        // Fetch related products from the same category
+        console.log(
+          "🔍 Fetching related products for category:",
+          productData.category
+        );
+
+        // Fetch related products from the same category (fetch more to ensure we have enough after filtering)
         const relatedData = await getProducts({
           category: productData.category,
           isActive: true,
-          limit: 4,
+          limit: 8,
         });
 
-        // Filter out the current product
-        const filtered = relatedData.products.filter(
-          (p) => p._id !== productId
-        );
+        console.log("📦 Total products fetched:", relatedData.products.length);
+
+        // Filter out the current product and limit to 4 for display
+        const filtered = relatedData.products
+          .filter((p) => p._id !== productId)
+          .slice(0, 4);
+
+        console.log("✅ Related products after filtering:", filtered.length);
+
         setRelatedProducts(filtered);
       } catch (error) {
         console.error("Error fetching product:", error);
         toast.error("Failed to load product details");
+        setRelatedProducts([]); // Reset related products on error
       } finally {
         setLoading(false);
       }
@@ -446,52 +457,206 @@ export default function ProductDetailPage() {
 
         {/* Related Products */}
         {relatedProducts.length > 0 && (
-          <div>
-            <h2 className="text-3xl font-bold text-[#3D3D3D] mb-8">
-              Related Products
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {relatedProducts.map((relatedProduct) => (
-                <Link
-                  key={relatedProduct._id}
-                  href={`/products/${relatedProduct._id}`}
-                >
-                  <Card className="group hover:shadow-lg transition-all duration-300 border-[#D4C5B9]/20 h-full">
-                    <div className="aspect-square overflow-hidden rounded-t-lg relative bg-[#FAF8F5]">
-                      {relatedProduct.images &&
-                      relatedProduct.images.length > 0 ? (
-                        <img
-                          src={relatedProduct.images[0]}
-                          alt={relatedProduct.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Package className="h-16 w-16 text-[#9CA986]" />
-                        </div>
-                      )}
-                    </div>
-                    <CardContent className="p-4">
-                      <h4 className="font-medium text-sm mb-2 line-clamp-2 text-[#3D3D3D]">
-                        {relatedProduct.name}
-                      </h4>
-                      <div className="flex items-center justify-between">
-                        <p className="text-lg font-bold text-[#7F6244]">
-                          ৳{relatedProduct.price.toFixed(2)}
-                        </p>
-                        <div className="flex items-center">
-                          <Star className="h-4 w-4 text-[#D4C5B9] fill-current" />
-                          <span className="ml-1 text-sm text-[#5A5A5A]">
-                            {relatedProduct.rating.toFixed(1)}
-                          </span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="bg-gradient-to-b from-white to-[#FAF8F5] py-12 px-6 rounded-2xl border border-[#D4C5B9]/20"
+          >
+            {/* Section Header */}
+            <div className="text-center mb-12">
+              <div className="flex items-center justify-center mb-4">
+                <div className="h-px bg-gradient-to-r from-transparent via-[#D4C5B9] to-transparent flex-1 max-w-xs"></div>
+                <Package className="h-6 w-6 text-[#7F6244] mx-4" />
+                <div className="h-px bg-gradient-to-r from-transparent via-[#D4C5B9] to-transparent flex-1 max-w-xs"></div>
+              </div>
+              <h2 className="text-4xl font-bold text-[#3D3D3D] mb-2">
+                You May Also Like
+              </h2>
+              <p className="text-[#8B7E6A] text-sm">
+                Discover similar products from the same collection
+              </p>
             </div>
-          </div>
+
+            {/* Products Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {relatedProducts.map((relatedProduct, index) => {
+                const finalPrice =
+                  relatedProduct.discount > 0
+                    ? relatedProduct.price * (1 - relatedProduct.discount / 100)
+                    : relatedProduct.price;
+
+                return (
+                  <motion.div
+                    key={relatedProduct._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: index * 0.1 }}
+                  >
+                    <Card className="group hover:shadow-2xl transition-all duration-300 border-[#D4C5B9]/30 h-full relative overflow-hidden hover:-translate-y-1">
+                      {/* Product Image */}
+                      <Link href={`/products/${relatedProduct._id}`}>
+                        <div className="aspect-square overflow-hidden rounded-t-lg relative bg-[#FAF8F5]">
+                          {relatedProduct.images &&
+                          relatedProduct.images.length > 0 ? (
+                            <img
+                              src={relatedProduct.images[0]}
+                              alt={relatedProduct.name}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Package className="h-16 w-16 text-[#9CA986]" />
+                            </div>
+                          )}
+
+                          {/* Discount Badge */}
+                          {relatedProduct.discount > 0 && (
+                            <Badge className="absolute top-3 left-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-bold shadow-lg">
+                              -{relatedProduct.discount}% OFF
+                            </Badge>
+                          )}
+
+                          {/* Stock Status Badge */}
+                          {relatedProduct.stock === 0 && (
+                            <Badge className="absolute top-3 right-3 bg-gray-800 text-white">
+                              Out of Stock
+                            </Badge>
+                          )}
+                          {relatedProduct.stock > 0 &&
+                            relatedProduct.stock < 10 && (
+                              <Badge className="absolute top-3 right-3 bg-orange-500 text-white">
+                                Only {relatedProduct.stock} left
+                              </Badge>
+                            )}
+
+                          {/* Overlay with Quick Actions */}
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-end justify-center pb-4 opacity-0 group-hover:opacity-100">
+                            <motion.div
+                              initial={{ y: 20 }}
+                              whileHover={{ y: 0 }}
+                              className="flex gap-2"
+                            >
+                              <Button
+                                size="sm"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  if (relatedProduct.stock > 0) {
+                                    addItem(
+                                      {
+                                        _id: relatedProduct._id,
+                                        name: relatedProduct.name,
+                                        price: relatedProduct.price,
+                                        images: relatedProduct.images,
+                                        stock: relatedProduct.stock,
+                                      },
+                                      1
+                                    );
+                                    toast.success(
+                                      `${relatedProduct.name} added to cart!`
+                                    );
+                                  }
+                                }}
+                                disabled={relatedProduct.stock === 0}
+                                className="bg-[#7F6244] hover:bg-[#6B5139] text-white shadow-lg"
+                              >
+                                <ShoppingCart className="h-4 w-4 mr-1" />
+                                Add to Cart
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  if (isFavorite(relatedProduct._id)) {
+                                    removeFromFavorites(relatedProduct._id);
+                                    toast.success("Removed from favorites");
+                                  } else {
+                                    addToFavorites({
+                                      _id: relatedProduct._id,
+                                      name: relatedProduct.name,
+                                      price: relatedProduct.price,
+                                      images: relatedProduct.images,
+                                    });
+                                    toast.success("Added to favorites!");
+                                  }
+                                }}
+                                variant="secondary"
+                                className="bg-white hover:bg-[#FAF8F5] shadow-lg"
+                              >
+                                <Heart
+                                  className={`h-4 w-4 ${
+                                    isFavorite(relatedProduct._id)
+                                      ? "fill-red-500 text-red-500"
+                                      : "text-[#7F6244]"
+                                  }`}
+                                />
+                              </Button>
+                            </motion.div>
+                          </div>
+                        </div>
+                      </Link>
+
+                      {/* Product Info */}
+                      <CardContent className="p-4 flex flex-col flex-grow">
+                        <Link href={`/products/${relatedProduct._id}`}>
+                          <h4 className="font-semibold text-sm mb-2 line-clamp-2 text-[#3D3D3D] hover:text-[#7F6244] transition-colors min-h-[40px]">
+                            {relatedProduct.name}
+                          </h4>
+                        </Link>
+
+                        {/* Category Badge */}
+                        <Badge
+                          variant="outline"
+                          className="mb-3 w-fit text-xs border-[#9CA986]/30 text-[#7F6244]"
+                        >
+                          {relatedProduct.category}
+                        </Badge>
+
+                        {/* Price and Rating */}
+                        <div className="flex items-center justify-between mt-auto">
+                          <div className="flex flex-col">
+                            <p className="text-lg font-bold text-[#7F6244]">
+                              ৳{finalPrice.toFixed(2)}
+                            </p>
+                            {relatedProduct.discount > 0 && (
+                              <p className="text-xs text-[#8B7E6A] line-through">
+                                ৳{relatedProduct.price.toFixed(2)}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center bg-[#FAF8F5] px-2 py-1 rounded-full">
+                            <Star className="h-4 w-4 text-[#D4C5B9] fill-current" />
+                            <span className="ml-1 text-sm font-medium text-[#3D3D3D]">
+                              {relatedProduct.rating.toFixed(1)}
+                            </span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            {/* View All Button */}
+            {product && (
+              <div className="text-center mt-10">
+                <Link
+                  href={`/products?category=${encodeURIComponent(
+                    product.category
+                  )}`}
+                >
+                  <Button
+                    size="lg"
+                    className="bg-[#7F6244] hover:bg-[#6B5139] text-white px-8 py-6 rounded-full shadow-lg hover:shadow-xl transition-all"
+                  >
+                    View All in {product.category}
+                    <ArrowLeft className="ml-2 h-5 w-5 rotate-180" />
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </motion.div>
         )}
       </div>
     </div>

@@ -185,6 +185,194 @@ export class OrdersService {
     return result;
   }
 
+  async getRevenueByMonth(
+    months: number = 6,
+  ): Promise<Array<{ month: string; revenue: number; orders: number }>> {
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - months);
+
+    const revenue = await this.orderModel.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startDate },
+          status: { $ne: 'cancelled' },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' },
+          },
+          revenue: { $sum: '$totalAmount' },
+          orders: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { '_id.year': 1, '_id.month': 1 },
+      },
+    ]);
+
+    const monthNames = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+
+    return revenue.map((item) => ({
+      month: monthNames[item._id.month - 1],
+      revenue: Math.round(item.revenue * 100) / 100,
+      orders: item.orders,
+    }));
+  }
+
+  async getTopProducts(limit: number = 5): Promise<
+    Array<{
+      productId: string;
+      name: string;
+      sales: number;
+      revenue: number;
+      image?: string;
+    }>
+  > {
+    const topProducts = await this.orderModel.aggregate([
+      {
+        $match: {
+          status: { $ne: 'cancelled' },
+        },
+      },
+      {
+        $unwind: '$items',
+      },
+      {
+        $group: {
+          _id: '$items.productId',
+          name: { $first: '$items.name' },
+          sales: { $sum: '$items.quantity' },
+          revenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } },
+        },
+      },
+      {
+        $sort: { revenue: -1 },
+      },
+      {
+        $limit: limit,
+      },
+    ]);
+
+    // Try to fetch product images from products collection
+    const productsWithImages = await Promise.all(
+      topProducts.map(async (product) => {
+        try {
+          const productDetails = await this.productsService.findOne(
+            product._id.toString(),
+          );
+          return {
+            productId: product._id.toString(),
+            name: product.name,
+            sales: product.sales,
+            revenue: Math.round(product.revenue * 100) / 100,
+            image: productDetails.images?.[0] || undefined,
+          };
+        } catch {
+          return {
+            productId: product._id.toString(),
+            name: product.name,
+            sales: product.sales,
+            revenue: Math.round(product.revenue * 100) / 100,
+          };
+        }
+      }),
+    );
+
+    return productsWithImages;
+  }
+
+  async getOrdersByDayOfWeek(): Promise<
+    Array<{ day: string; orders: number; revenue: number }>
+  > {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const ordersByDay = await this.orderModel.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: thirtyDaysAgo },
+          status: { $ne: 'cancelled' },
+        },
+      },
+      {
+        $group: {
+          _id: { $dayOfWeek: '$createdAt' },
+          orders: { $sum: 1 },
+          revenue: { $sum: '$totalAmount' },
+        },
+      },
+      {
+        $sort: { _id: 1 },
+      },
+    ]);
+
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    // Initialize all days with 0
+    const result = dayNames.map((day, index) => ({
+      day,
+      orders: 0,
+      revenue: 0,
+    }));
+
+    // Fill in actual data
+    ordersByDay.forEach((item) => {
+      const dayIndex = item._id === 1 ? 0 : item._id - 1; // MongoDB dayOfWeek: 1=Sunday
+      result[dayIndex] = {
+        day: dayNames[dayIndex],
+        orders: item.orders,
+        revenue: Math.round(item.revenue * 100) / 100,
+      };
+    });
+
+    // Reorder to start from Monday
+    const reordered = [
+      result[1], // Mon
+      result[2], // Tue
+      result[3], // Wed
+      result[4], // Thu
+      result[5], // Fri
+      result[6], // Sat
+      result[0], // Sun
+    ];
+
+    return reordered;
+  }
+
+  async getOrdersByStatus(): Promise<Record<string, number>> {
+    const statusCounts = await this.orderModel.aggregate([
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const result: Record<string, number> = {};
+    statusCounts.forEach((item) => {
+      result[item._id] = item.count;
+    });
+
+    return result;
+  }
+
   private generateOrderNumber(): string {
     const timestamp = Date.now().toString();
     const random = Math.floor(Math.random() * 1000)

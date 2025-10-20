@@ -24,6 +24,7 @@ import {
   Linkedin,
   Instagram,
   Mail,
+  FacebookIcon,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -40,6 +41,7 @@ import { useClient } from "@/hooks/useClient";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCartStore } from "@/stores/cartStore";
 import { useFavoritesStore } from "@/stores/favoritesStore";
+import { Footer } from "@/components/ui/footer";
 
 export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -92,7 +94,7 @@ export default function HomePage() {
       setFeaturedProducts(featuredResponse.products || featuredResponse);
 
       // Take first 8 categories for homepage
-      const limitedCategories = categoriesData.slice(0, 8);
+      const limitedCategories = categoriesData.slice(0, 12);
       setCategories(limitedCategories);
 
       // Fetch product counts for each category
@@ -327,7 +329,7 @@ export default function HomePage() {
         transition={{ duration: 0.6 }}
         className="py-20 bg-gradient-to-b from-[#FAF8F5] to-white"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-24">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-[#3D3D3D] mb-4">
               Shop by Category
@@ -356,7 +358,12 @@ export default function HomePage() {
                     viewport={{ once: true }}
                     transition={{ duration: 0.5, delay: index * 0.1 }}
                   >
-                    <Link href="/category" className="group block">
+                    <Link
+                      href={`/products?category=${encodeURIComponent(
+                        category.name
+                      )}`}
+                      className="group block"
+                    >
                       <Card className="overflow-hidden border border-[#D4C5B9]/20 hover:border-[#9CA986]/50 transition-all duration-300 hover:shadow-2xl">
                         <div className="relative h-48 overflow-hidden">
                           <img
@@ -393,65 +400,6 @@ export default function HomePage() {
         </div>
       </motion.div>
 
-      {/* Enhanced Features Section with Framer Motion */}
-      <motion.div
-        initial={{ opacity: 0, y: 50 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-100px" }}
-        transition={{ duration: 0.6 }}
-        className="py-20 bg-white border-y border-[#D4C5B9]/20"
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-[#3D3D3D] mb-4">
-              Why Choose Us
-            </h2>
-            <p className="text-[#5A5A5A] text-lg">
-              Everything you need for a beautiful home
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              {
-                icon: Shield,
-                title: "Premium Quality",
-                description:
-                  "Handpicked items crafted with care and attention to detail",
-              },
-              {
-                icon: Truck,
-                title: "Free Shipping",
-                description: "Complimentary delivery on orders over ৳50",
-              },
-              {
-                icon: RotateCcw,
-                title: "Easy Returns",
-                description: "30-day hassle-free return policy",
-              },
-              {
-                icon: Palette,
-                title: "Design Experts",
-                description: "Free consultation with our interior specialists",
-              },
-            ].map((feature, index) => (
-              <motion.div
-                key={index}
-                whileHover={{ scale: 1.05, rotate: 2 }}
-                className="feature-card group text-center transition-all duration-300"
-              >
-                <div className="w-20 h-20 bg-gradient-to-br from-[#9CA986]/20 to-[#D4C5B9]/30 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:shadow-lg transition-all duration-300">
-                  <feature.icon className="h-10 w-10 text-[#7F6244]" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2 text-[#3D3D3D]">
-                  {feature.title}
-                </h3>
-                <p className="text-[#5A5A5A]">{feature.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </motion.div>
-
       {/* Enhanced Featured Products Section with Framer Motion */}
       <motion.div
         initial={{ opacity: 0, y: 50 }}
@@ -460,7 +408,7 @@ export default function HomePage() {
         transition={{ duration: 0.6 }}
         className="py-20 bg-white"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-24">
           <div className="flex items-center justify-between mb-12">
             <div>
               <h2 className="text-4xl font-bold text-[#3D3D3D] mb-4">
@@ -559,7 +507,7 @@ export default function HomePage() {
                           disabled={
                             product.stock === 0 || addedToCart === product._id
                           }
-                          className="w-full bg-gradient-to-r from-[#7F6244] to-[#9CA986] hover:from-[#6B5139] hover:to-[#8B7E6A] text-white font-semibold hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-full bg-[#7F6244] hover:bg-[#6B5139] text-white font-semibold hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <ShoppingCart className="mr-2 h-4 w-4" />
                           {addedToCart === product._id
@@ -573,6 +521,65 @@ export default function HomePage() {
                   </Card>
                 </div>
               ))}
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Enhanced Features Section with Framer Motion */}
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.6 }}
+        className="py-20 bg-white border-y border-[#D4C5B9]/20"
+      >
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-24">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-[#3D3D3D] mb-4">
+              Why Choose Us
+            </h2>
+            <p className="text-[#5A5A5A] text-lg">
+              Everything you need for a beautiful home
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              {
+                icon: Shield,
+                title: "Premium Quality",
+                description:
+                  "Handpicked items crafted with care and attention to detail",
+              },
+              {
+                icon: Truck,
+                title: "Free Shipping",
+                description: "Complimentary delivery on orders over ৳50",
+              },
+              {
+                icon: RotateCcw,
+                title: "Easy Returns",
+                description: "30-day hassle-free return policy",
+              },
+              {
+                icon: Palette,
+                title: "Design Experts",
+                description: "Free consultation with our interior specialists",
+              },
+            ].map((feature, index) => (
+              <motion.div
+                key={index}
+                whileHover={{ scale: 1.05, rotate: 2 }}
+                className="feature-card group text-center transition-all duration-300"
+              >
+                <div className="w-20 h-20 bg-gradient-to-br from-[#9CA986]/20 to-[#D4C5B9]/30 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:shadow-lg transition-all duration-300">
+                  <feature.icon className="h-10 w-10 text-[#7F6244]" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2 text-[#3D3D3D]">
+                  {feature.title}
+                </h3>
+                <p className="text-[#5A5A5A]">{feature.description}</p>
+              </motion.div>
+            ))}
           </div>
         </div>
       </motion.div>
@@ -705,206 +712,7 @@ export default function HomePage() {
         </div>
       </motion.div>
 
-      {/* Animated Footer with Wave Effect */}
-      <footer className="relative bg-gradient-to-b from-[#3D3D3D] to-[#2a2a2a] text-white overflow-hidden">
-        {/* Animated Wave Background */}
-        <div className="absolute inset-x-0 bottom-0 z-0">
-          <svg
-            viewBox="0 0 1440 320"
-            className="w-full h-auto"
-            preserveAspectRatio="none"
-          >
-            <motion.path
-              initial={{
-                d: "M0,160L48,176C96,192,192,224,288,224C384,224,480,192,576,165.3C672,139,768,117,864,122.7C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z",
-              }}
-              animate={{
-                d: [
-                  "M0,160L48,176C96,192,192,224,288,224C384,224,480,192,576,165.3C672,139,768,117,864,122.7C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z",
-                  "M0,192L48,197.3C96,203,192,213,288,192C384,171,480,117,576,112C672,107,768,149,864,165.3C960,181,1056,171,1152,154.7C1248,139,1344,117,1392,106.7L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z",
-                  "M0,160L48,176C96,192,192,224,288,224C384,224,480,192,576,165.3C672,139,768,117,864,122.7C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z",
-                ],
-              }}
-              transition={{
-                duration: 8,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-              fill="rgba(156, 169, 134, 0.2)"
-            />
-            <motion.path
-              initial={{
-                d: "M0,96L48,112C96,128,192,160,288,165.3C384,171,480,149,576,128C672,107,768,85,864,96C960,107,1056,149,1152,160C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z",
-              }}
-              animate={{
-                d: [
-                  "M0,96L48,112C96,128,192,160,288,165.3C384,171,480,149,576,128C672,107,768,85,864,96C960,107,1056,149,1152,160C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z",
-                  "M0,128L48,138.7C96,149,192,171,288,165.3C384,160,480,128,576,133.3C672,139,768,181,864,186.7C960,192,1056,160,1152,138.7C1248,117,1344,107,1392,101.3L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z",
-                  "M0,96L48,112C96,128,192,160,288,165.3C384,171,480,149,576,128C672,107,768,85,864,96C960,107,1056,149,1152,160C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z",
-                ],
-              }}
-              transition={{
-                duration: 10,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-              fill="rgba(127, 98, 68, 0.3)"
-            />
-            <motion.path
-              initial={{
-                d: "M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,213.3C672,224,768,224,864,213.3C960,203,1056,181,1152,165.3C1248,149,1344,139,1392,133.3L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z",
-              }}
-              animate={{
-                d: [
-                  "M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,213.3C672,224,768,224,864,213.3C960,203,1056,181,1152,165.3C1248,149,1344,139,1392,133.3L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z",
-                  "M0,256L48,234.7C96,213,192,171,288,170.7C384,171,480,213,576,218.7C672,224,768,192,864,181.3C960,171,1056,181,1152,197.3C1248,213,1344,235,1392,245.3L1440,256L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z",
-                  "M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,213.3C672,224,768,224,864,213.3C960,203,1056,181,1152,165.3C1248,149,1344,139,1392,133.3L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z",
-                ],
-              }}
-              transition={{
-                duration: 12,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-              fill="rgba(212, 197, 185, 0.15)"
-            />
-          </svg>
-        </div>
-
-        {/* Footer Content */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          {/* Logo and Brand */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="flex flex-col items-center mb-12"
-          >
-            <motion.div
-              whileHover={{ scale: 1.1 }}
-              transition={{ duration: 0.3 }}
-              className="w-20 h-20 mb-4"
-            >
-              <img
-                src="/logo.png"
-                alt="Home Decor And More Logo"
-                className="w-full h-full object-contain"
-              />
-            </motion.div>
-            <h3 className="text-2xl font-bold text-white mb-2">
-              Home Decor And More
-            </h3>
-            <p className="text-white/60 text-center max-w-md">
-              Transform your house into a home with our curated collection of
-              beautiful decor and furniture.
-            </p>
-          </motion.div>
-
-          {/* Social Media Icons */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="flex justify-center gap-6 mb-12"
-          >
-            {[
-              { Icon: Github, href: "https://github.com", label: "GitHub" },
-              {
-                Icon: Linkedin,
-                href: "https://linkedin.com",
-                label: "LinkedIn",
-              },
-              {
-                Icon: Instagram,
-                href: "https://instagram.com",
-                label: "Instagram",
-              },
-              {
-                Icon: Mail,
-                href: "mailto:info@feniangadgets.com",
-                label: "Email",
-              },
-            ].map(({ Icon, href, label }, index) => (
-              <motion.a
-                key={label}
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                whileHover={{ scale: 1.2, rotate: 360 }}
-                whileTap={{ scale: 0.9 }}
-                transition={{ duration: 0.3 }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                style={{ transitionDelay: `${index * 0.1}s` }}
-                className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center hover:bg-[#7F6244] hover:border-[#7F6244] transition-all duration-300 group"
-                aria-label={label}
-              >
-                <Icon className="w-5 h-5 text-white group-hover:scale-110 transition-transform" />
-              </motion.a>
-            ))}
-          </motion.div>
-
-          {/* Navigation Links */}
-          <motion.nav
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="flex flex-wrap justify-center gap-8 mb-12"
-          >
-            {[
-              { name: "Home", href: "/home" },
-              { name: "Products", href: "/products" },
-              { name: "Categories", href: "/category" },
-              { name: "About", href: "#about" },
-              { name: "Contact", href: "#contact" },
-            ].map((link, index) => (
-              <motion.div
-                key={link.name}
-                whileHover={{ scale: 1.1, y: -2 }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Link
-                  href={link.href}
-                  className="text-white/80 hover:text-white font-medium text-lg transition-colors duration-300 relative group"
-                >
-                  {link.name}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#9CA986] group-hover:w-full transition-all duration-300"></span>
-                </Link>
-              </motion.div>
-            ))}
-          </motion.nav>
-
-          {/* Copyright */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            className="text-center"
-          >
-            <p className="text-white/60 text-sm">
-              © {new Date().getFullYear()} Fenian Gadgets. All rights reserved.
-            </p>
-            <p className="text-white/40 text-xs mt-2">
-              Made with{" "}
-              <Heart className="inline w-3 h-3 text-red-400 fill-current" /> for
-              beautiful homes
-            </p>
-          </motion.div>
-        </div>
-
-        {/* Floating Decorative Elements */}
-        <div className="absolute top-10 left-10 w-20 h-20 bg-[#9CA986]/20 rounded-full blur-2xl animate-pulse"></div>
-        <div
-          className="absolute top-20 right-20 w-32 h-32 bg-[#7F6244]/20 rounded-full blur-3xl animate-pulse"
-          style={{ animationDelay: "1s" }}
-        ></div>
-        <div
-          className="absolute bottom-32 left-1/4 w-24 h-24 bg-[#D4C5B9]/20 rounded-full blur-2xl animate-pulse"
-          style={{ animationDelay: "2s" }}
-        ></div>
-      </footer>
+      <Footer />
     </div>
   );
 }

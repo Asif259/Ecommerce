@@ -15,7 +15,7 @@ interface FavoritesState {
   isFavorite: (productId: string) => boolean;
 }
 
-const FAVORITES_STORAGE_KEY = "fenian-gadgets-favorites";
+const FAVORITES_STORAGE_KEY = "homedecor-more-favorites";
 
 // Helper function to load favorites from localStorage
 const loadFavoritesFromStorage = (): FavoriteItem[] => {

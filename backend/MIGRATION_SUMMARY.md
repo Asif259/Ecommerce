@@ -104,7 +104,7 @@ categories.map((category) => {
 
 ```bash
 # 1. Backup database
-mongodump --db=fenian-gadgets --out=./backup
+mongodump --db=homedecor-more --out=./backup
 
 # 2. Run migration
 cd backend

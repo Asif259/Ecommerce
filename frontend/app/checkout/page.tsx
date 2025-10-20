@@ -628,8 +628,8 @@ export default function CheckoutPage() {
                         required={paymentMethod === "mobile-banking"}
                       />
                       <span className="text-xs text-[#5A5A5A]">
-                        Fenian Gadgets holds no responsibility for payments, by
-                        proceeding you accept all of our{" "}
+                        Home Decor & More holds no responsibility for payments,
+                        by proceeding you accept all of our{" "}
                         <Link
                           href="/terms"
                           className="text-[#7F6244] hover:underline"

@@ -1,7 +1,7 @@
 {
-  "name": "fenian-gadgets",
+  "name": "homedecor-more",
   "version": "1.0.0",
-  "description": "Fenian Gadgets - E-commerce platform",
+  "description": "Home Decor & More - E-commerce platform",
   "private": true,
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",

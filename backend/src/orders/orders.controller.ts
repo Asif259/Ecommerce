@@ -14,12 +14,14 @@ import {
 import { OrdersService } from './orders.service';
 import { CreateOrderDto, UpdateOrderDto, OrderQueryDto } from './dto/order.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Public } from '../auth/auth.decorators';
 
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   @Post()
+  @Public()
   create(@Body() createOrderDto: CreateOrderDto) {
     return this.ordersService.create(createOrderDto);
   }
@@ -36,7 +38,36 @@ export class OrdersController {
     return this.ordersService.getOrderStats();
   }
 
+  @Get('analytics/revenue-by-month')
+  @UseGuards(JwtAuthGuard)
+  getRevenueByMonth(@Query('months') months?: number) {
+    return this.ordersService.getRevenueByMonth(
+      months ? parseInt(months.toString()) : 6,
+    );
+  }
+
+  @Get('analytics/top-products')
+  @UseGuards(JwtAuthGuard)
+  getTopProducts(@Query('limit') limit?: number) {
+    return this.ordersService.getTopProducts(
+      limit ? parseInt(limit.toString()) : 5,
+    );
+  }
+
+  @Get('analytics/orders-by-day')
+  @UseGuards(JwtAuthGuard)
+  getOrdersByDayOfWeek() {
+    return this.ordersService.getOrdersByDayOfWeek();
+  }
+
+  @Get('analytics/orders-by-status')
+  @UseGuards(JwtAuthGuard)
+  getOrdersByStatus() {
+    return this.ordersService.getOrdersByStatus();
+  }
+
   @Get('order-number/:orderNumber')
+  @Public()
   findByOrderNumber(@Param('orderNumber') orderNumber: string) {
     return this.ordersService.findByOrderNumber(orderNumber);
   }

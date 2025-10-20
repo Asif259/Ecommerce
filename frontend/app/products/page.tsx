@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,6 +25,8 @@ import {
   ShoppingCart,
   ArrowUpDown,
   SlidersHorizontal,
+  X,
+  ChevronDown,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -36,6 +39,7 @@ import { useClient } from "@/hooks/useClient";
 import { HomeBreadcrumb } from "@/components/ui/breadcrumbs";
 import { useCartStore } from "@/stores/cartStore";
 import { useFavoritesStore } from "@/stores/favoritesStore";
+import { Footer } from "@/components/ui/footer";
 
 export default function ProductsPage() {
   const searchParams = useSearchParams();
@@ -44,7 +48,10 @@ export default function ProductsPage() {
     { category: string; count: number }[]
   >([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(() => {
+    // Initialize with URL parameter if present
+    return searchParams.get("search") || "";
+  });
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
     () => {
       // Initialize with URL parameter if present
@@ -71,7 +78,7 @@ export default function ProductsPage() {
 
   useEffect(() => {
     fetchData();
-  }, [currentPage, selectedCategory, sortBy]);
+  }, [currentPage, selectedCategory, sortBy, searchTerm]);
 
   // Separate effect for categories and total count to prevent unnecessary re-fetching
   useEffect(() => {
@@ -109,22 +116,24 @@ export default function ProductsPage() {
         isActive: true,
       };
 
+      // Add search filter if present
+      if (searchTerm && searchTerm.trim() !== "") {
+        queryParams.search = searchTerm.trim();
+        console.log("🔍 Searching for:", searchTerm);
+      }
+
       // Add category filter only if a specific category is selected (not null)
       if (selectedCategory !== null && selectedCategory.trim() !== "") {
         queryParams.category = selectedCategory.trim();
         console.log("🔍 Filtering by category:", selectedCategory);
-        console.log("📦 Query params being sent:", queryParams);
-      } else {
-        console.log("📋 Showing all products");
       }
+
+      console.log("📦 Query params being sent:", queryParams);
 
       const productsResponse = await getProducts(queryParams);
 
       console.log("✅ Products response:", productsResponse);
-      console.log(
-        "📊 Total products for this category:",
-        productsResponse.total
-      );
+      console.log("📊 Total products:", productsResponse.total);
 
       setProducts(productsResponse.products || []);
       setTotalPages(Math.ceil((productsResponse.total || 0) / 32));
@@ -177,8 +186,11 @@ export default function ProductsPage() {
   const handleCategoryChange = (category: string | null) => {
     setSelectedCategory(category);
     setCurrentPage(1);
-    // Clear search when changing category
+  };
+
+  const handleClearSearch = () => {
     setSearchTerm("");
+    setCurrentPage(1);
   };
 
   const handleSortChange = (sort: string) => {
@@ -236,15 +248,17 @@ export default function ProductsPage() {
         <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-4xl font-bold mb-4">Our Products</h1>
           <p className="text-white/90">
-            Discover our complete collection of home decor
+            {searchTerm
+              ? `Search results for "${searchTerm}"`
+              : "Discover our complete collection of home decor"}
           </p>
         </div>
       </div>
 
       <div className="max-w-8xl mx-auto px-4 sm:px-3 lg:px-4 py-8">
         <div className="flex flex-col lg:flex-row gap-4">
-          {/* Sidebar */}
-          <div className="w-full lg:w-64 flex-shrink-0 space-y-6">
+          {/* Sidebar - Desktop Only */}
+          <div className="hidden lg:block w-full lg:w-64 flex-shrink-0 space-y-6">
             {/* Search */}
             <div className="bg-white p-4 rounded-lg border border-[#D4C5B9]/20">
               <h3 className="font-semibold mb-3 text-[#3D3D3D]">Search</h3>
@@ -342,7 +356,7 @@ export default function ProductsPage() {
                 </div>
                 <Button
                   size="sm"
-                  className="w-full bg-[#7F6244] hover:bg-[#6B5139]"
+                  className="w-full bg-[#7F6244] hover:bg-[#6B5139] text-white font-semibold  "
                 >
                   Apply Filter
                 </Button>
@@ -350,8 +364,108 @@ export default function ProductsPage() {
             </div>
           </div>
 
+          {/* Mobile/Tablet Filters - Hidden on Desktop */}
+          <div className="lg:hidden w-full space-y-4 mb-4">
+            {/* Mobile Search */}
+            <div className="bg-white p-4 rounded-lg border border-[#D4C5B9]/20">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#8B7E6A]" />
+                <Input
+                  placeholder="Search products..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    handleSearch(e.target.value);
+                  }}
+                  className="pl-10 border-[#D4C5B9] focus:border-[#7F6244] focus:ring-[#7F6244]"
+                />
+              </div>
+            </div>
+
+            {/* Mobile Category Dropdown */}
+            <div className="bg-white p-4 rounded-lg border border-[#D4C5B9]/20">
+              <label
+                htmlFor="mobile-category-select"
+                className="block text-sm font-semibold mb-2 text-[#3D3D3D]"
+              >
+                Category
+              </label>
+              <div className="relative">
+                <select
+                  id="mobile-category-select"
+                  value={selectedCategory || ""}
+                  onChange={(e) => handleCategoryChange(e.target.value || null)}
+                  className="w-full appearance-none bg-white border border-[#D4C5B9] rounded-lg px-4 py-3 pr-10 text-[#3D3D3D] focus:border-[#7F6244] focus:ring-2 focus:ring-[#7F6244]/20 focus:outline-none transition-all cursor-pointer"
+                >
+                  <option value="">All Products ({allProductsCount})</option>
+                  {isClient &&
+                    categories.map((categoryData) => (
+                      <option
+                        key={categoryData.category}
+                        value={categoryData.category}
+                      >
+                        {categoryData.category} ({categoryData.count})
+                      </option>
+                    ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#8B7E6A] pointer-events-none" />
+              </div>
+            </div>
+          </div>
+
           {/* Main Content */}
           <div className="flex-1 min-w-0">
+            {/* Active Filters - Search and Category */}
+            <div className="mb-4 space-y-3">
+              {/* Active Search Filter */}
+              {searchTerm && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="p-4 bg-[#9CA986]/10 border border-[#9CA986]/30 rounded-lg flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-2">
+                    <Search className="h-4 w-4 text-[#7F6244]" />
+                    <span className="text-sm text-[#3D3D3D]">
+                      Searching for: <strong>"{searchTerm}"</strong>
+                    </span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleClearSearch}
+                    className="border-[#7F6244] text-[#7F6244] hover:bg-[#7F6244] hover:text-white"
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Clear
+                  </Button>
+                </motion.div>
+              )}
+
+              {/* Active Category Filter Chip */}
+              {selectedCategory && (
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#7F6244] to-[#6B5139] text-white rounded-full shadow-md"
+                >
+                  <Filter className="h-4 w-4" />
+                  <span className="text-sm font-medium">
+                    {selectedCategory}
+                  </span>
+                  <button
+                    onClick={() => handleCategoryChange(null)}
+                    className="ml-1 hover:bg-white/20 rounded-full p-1 transition-colors"
+                    aria-label="Clear category filter"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </motion.div>
+              )}
+            </div>
+
             {/* Toolbar */}
             <div className="flex items-center justify-between mb-6 bg-white p-4 rounded-lg border border-[#D4C5B9]/20">
               <div className="flex items-center space-x-4">
@@ -639,6 +753,8 @@ export default function ProductsPage() {
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }
