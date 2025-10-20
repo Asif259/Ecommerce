@@ -39,9 +39,6 @@ export class ShippingAddress {
   zipCode: string;
 
   @Prop({ required: true })
-  country: string;
-
-  @Prop({ required: true })
   phone: string;
 }
 
@@ -73,6 +70,12 @@ export class Order {
 
   @Prop({ default: 'pending' })
   paymentStatus: string; // pending, paid, failed, refunded
+
+  @Prop()
+  paymentPhone: string;
+
+  @Prop()
+  transactionId: string;
 
   @Prop()
   notes: string;

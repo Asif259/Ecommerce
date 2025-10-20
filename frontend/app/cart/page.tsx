@@ -7,16 +7,25 @@ import { ShoppingBag, ArrowLeft, Trash2, Plus, Minus } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, getTotal, clearCart } =
     useCartStore();
+  const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch by only rendering cart content after mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const total = getTotal();
   const isEmpty = items.length === 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#FAF8F5] to-white py-12">
+    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-[#FAF8F5] to-white py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
@@ -29,13 +38,27 @@ export default function CartPage() {
           </Link>
           <h1 className="text-4xl font-bold text-[#3D3D3D]">Shopping Cart</h1>
           <p className="text-[#8B7E6A] mt-2">
-            {isEmpty
+            {!mounted
+              ? "Loading cart..."
+              : isEmpty
               ? "Your cart is empty"
               : `${items.length} items in your cart`}
           </p>
         </div>
 
-        {isEmpty ? (
+        {!mounted ? (
+          /* Loading State */
+          <Card className="border-[#D4C5B9]/20">
+            <CardContent className="py-20 text-center">
+              <div className="h-32 w-32 mx-auto mb-6 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#7F6244]"></div>
+              </div>
+              <h2 className="text-2xl font-bold text-[#3D3D3D] mb-4">
+                Loading your cart...
+              </h2>
+            </CardContent>
+          </Card>
+        ) : isEmpty ? (
           /* Empty Cart State */
           <Card className="border-[#D4C5B9]/20">
             <CardContent className="py-20 text-center">
@@ -167,7 +190,7 @@ export default function CartPage() {
 
             {/* Order Summary */}
             <div className="lg:col-span-1">
-              <Card className="border-[#D4C5B9]/20 sticky top-8">
+              <Card className="border-[#D4C5B9]/20 sticky top-36">
                 <CardContent className="p-6">
                   <h2 className="text-2xl font-bold text-[#3D3D3D] mb-6">
                     Order Summary
@@ -180,13 +203,7 @@ export default function CartPage() {
                     </div>
                     <div className="flex justify-between text-[#5A5A5A]">
                       <span>Shipping</span>
-                      <span className="font-semibold text-green-600">Free</span>
-                    </div>
-                    <div className="flex justify-between text-[#5A5A5A]">
-                      <span>Tax</span>
-                      <span className="font-semibold">
-                        ${(total * 0.1).toFixed(2)}
-                      </span>
+                      <span className="font-semibold">Select at checkout</span>
                     </div>
                     <div className="border-t border-[#D4C5B9] pt-4">
                       <div className="flex justify-between items-center">
@@ -194,7 +211,7 @@ export default function CartPage() {
                           Total
                         </span>
                         <span className="text-2xl font-bold text-[#7F6244]">
-                          ${(total * 1.1).toFixed(2)}
+                          ${total.toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -203,8 +220,7 @@ export default function CartPage() {
                   <Button
                     className="w-full bg-[#7F6244] hover:bg-[#6B5139] text-white py-6 text-base font-semibold mb-4"
                     onClick={() => {
-                      // TODO: Navigate to checkout page
-                      alert("Checkout functionality coming soon!");
+                      router.push("/checkout");
                     }}
                   >
                     Proceed to Checkout
@@ -223,16 +239,14 @@ export default function CartPage() {
                   <div className="mt-8 pt-6 border-t border-[#D4C5B9]">
                     <p className="text-sm text-[#8B7E6A] mb-3">We Accept:</p>
                     <div className="flex gap-2 flex-wrap">
-                      {["Visa", "Mastercard", "PayPal", "Apple Pay"].map(
-                        (method) => (
-                          <div
-                            key={method}
-                            className="px-3 py-2 bg-[#FAF8F5] rounded border border-[#D4C5B9] text-xs font-medium text-[#5A5A5A]"
-                          >
-                            {method}
-                          </div>
-                        )
-                      )}
+                      {["COD", "Bkash", "Bank Transfer"].map((method) => (
+                        <div
+                          key={method}
+                          className="px-3 py-2 bg-[#FAF8F5] rounded border border-[#D4C5B9] text-xs font-medium text-[#5A5A5A]"
+                        >
+                          {method}
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </CardContent>

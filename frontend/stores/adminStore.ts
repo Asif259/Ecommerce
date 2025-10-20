@@ -5,13 +5,16 @@ interface User {
   id: string;
   email: string;
   role: string;
+  createdAt?: string;
+  updatedAt?: string;
+  lastLogin?: string;
 }
 
 interface AdminState {
   isLoggedIn: boolean;
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   verify: () => Promise<boolean>;
 }
 
@@ -30,6 +33,9 @@ const useAuthStore = create<AdminState>((set) => ({
           id: response.data.user.userId,
           email: response.data.user.email,
           role: response.data.user.role,
+          createdAt: response.data.user.createdAt,
+          updatedAt: response.data.user.updatedAt,
+          lastLogin: response.data.user.lastLogin,
         };
         set({ isLoggedIn: true, user: userData });
       }
@@ -38,7 +44,18 @@ const useAuthStore = create<AdminState>((set) => ({
       throw error;
     }
   },
-  logout: () => set({ isLoggedIn: false, user: null }),
+  logout: async () => {
+    try {
+      // Call backend logout API to clear the HTTP-only cookie
+      await api.post("/auth/logout");
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Continue with local logout even if API call fails
+    } finally {
+      // Clear local state
+      set({ isLoggedIn: false, user: null });
+    }
+  },
   verify: async () => {
     try {
       const response = await api.get("/auth/verify");
@@ -47,6 +64,9 @@ const useAuthStore = create<AdminState>((set) => ({
           id: response.data.user.userId,
           email: response.data.user.email,
           role: response.data.user.role,
+          createdAt: response.data.user.createdAt,
+          updatedAt: response.data.user.updatedAt,
+          lastLogin: response.data.user.lastLogin,
         };
         set({ isLoggedIn: true, user: userData });
         return true;

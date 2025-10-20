@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface BreadcrumbItem {
@@ -26,23 +25,24 @@ export function Breadcrumbs({ items, className }: BreadcrumbsProps) {
 
           return (
             <li key={index} className="flex items-center">
-              {index > 0 && (
-                <ChevronRight className="h-4 w-4 text-gray-400 mx-2" />
-              )}
+              {index > 0 && <span className="text-[#D4C5B9] mx-2">/</span>}
 
               {isLast ? (
-                <span className="text-gray-600 font-medium" aria-current="page">
+                <span
+                  className="text-[#3D3D3D] font-medium"
+                  aria-current="page"
+                >
                   {item.label}
                 </span>
               ) : item.href ? (
                 <Link
                   href={item.href}
-                  className="text-green-600 hover:text-green-700 hover:underline transition-colors"
+                  className="text-[#8B7E6A] hover:text-[#7F6244] transition-colors"
                 >
                   {item.label}
                 </Link>
               ) : (
-                <span className="text-gray-500">{item.label}</span>
+                <span className="text-[#8B7E6A]">{item.label}</span>
               )}
             </li>
           );
@@ -62,7 +62,7 @@ export function HomeBreadcrumb({
 }) {
   return (
     <Breadcrumbs
-      items={[{ label: "Home", href: "/home" }, { label: currentPage }]}
+      items={[{ label: "Home", href: "/" }, { label: currentPage }]}
       className={className}
     />
   );
@@ -78,7 +78,7 @@ export function CategoryBreadcrumb({
   return (
     <Breadcrumbs
       items={[
-        { label: "Home", href: "/home" },
+        { label: "Home", href: "/" },
         { label: "Category", href: "/category" },
         { label: category },
       ]}
@@ -97,7 +97,7 @@ export function ProductBreadcrumb({
   className?: string;
 }) {
   const items: BreadcrumbItem[] = [
-    { label: "Home", href: "/home" },
+    { label: "Home", href: "/" },
     { label: "Products", href: "/products" },
   ];
 

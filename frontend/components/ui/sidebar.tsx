@@ -25,7 +25,7 @@ interface SidebarProps {
   user?: {
     email?: string;
   };
-  onLogout: () => void;
+  onLogout: () => void | Promise<void>;
   isCollapsed: boolean;
   onToggleCollapse: (collapsed: boolean) => void;
 }
@@ -116,14 +116,22 @@ export function Sidebar({
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            {!isCollapsed && (
+            {!isCollapsed ? (
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <Package className="h-5 w-5 text-white" />
+                <div className="w-8 h-8 flex items-center justify-center">
+                  <img
+                    src="/logo.png"
+                    alt="Logo"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
-                <span className="text-lg font-bold text-gray-900">Admin</span>
+                <span className="text-lg font-bold text-[#7F6244]">Admin</span>
               </div>
+            ) : (
+              <div className="w-8 h-8" />
             )}
+
+            {/* Desktop collapse/expand button */}
             <Button
               variant="ghost"
               size="sm"
@@ -133,9 +141,11 @@ export function Sidebar({
               {isCollapsed ? (
                 <Menu className="h-4 w-4" />
               ) : (
-                <Menu className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4" />
               )}
             </Button>
+
+            {/* Mobile close button */}
             <Button
               variant="ghost"
               size="sm"

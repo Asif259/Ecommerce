@@ -3,7 +3,11 @@ import { Document } from 'mongoose';
 
 export type CategoryDocument = Category & Document;
 
-@Schema({ timestamps: true })
+@Schema({
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true },
+})
 export class Category {
   @Prop({ required: true, unique: true })
   name: string;
@@ -22,3 +26,11 @@ export class Category {
 }
 
 export const CategorySchema = SchemaFactory.createForClass(Category);
+
+// Virtual field for product count
+CategorySchema.virtual('productCount', {
+  ref: 'Product',
+  localField: '_id',
+  foreignField: 'category',
+  count: true,
+});

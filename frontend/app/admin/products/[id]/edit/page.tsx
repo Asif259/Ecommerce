@@ -568,8 +568,8 @@ export default function EditProductPage({
                 Cancel
               </Button>
             </Link>
-            <Button type="submit" disabled={loading}>
-              <Save className="h-4 w-4 mr-2" />
+            <Button type="submit" disabled={loading} className="bg-blue-500 hover:bg-blue-600 text-white">
+              <Save className="h-4 w-4 mr-2 " />
               {loading ? "Updating Product..." : "Update Product"}
             </Button>
           </div>

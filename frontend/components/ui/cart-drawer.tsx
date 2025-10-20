@@ -6,6 +6,7 @@ import { X, ShoppingBag } from "lucide-react";
 import { Button } from "./button";
 import { CartItem } from "./cart-item";
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface CartDrawerProps {
 export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { items, updateQuantity, removeItem, getTotal, clearCart } =
     useCartStore();
+  const router = useRouter();
 
   // Prevent body scroll when drawer is open
   useEffect(() => {
@@ -111,12 +113,17 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   </span>
                 </div>
 
+                {/* Shipping Info */}
+                <div className="text-sm text-[#8B7E6A] text-center">
+                  Shipping: Select at checkout
+                </div>
+
                 {/* Checkout Button */}
                 <Button
                   className="w-full bg-[#7F6244] hover:bg-[#6B5139] text-white py-6 text-base font-semibold"
                   onClick={() => {
-                    // TODO: Navigate to checkout page
-                    alert("Checkout functionality coming soon!");
+                    onClose();
+                    router.push("/checkout");
                   }}
                 >
                   Proceed to Checkout

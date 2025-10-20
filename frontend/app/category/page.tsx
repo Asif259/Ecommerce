@@ -87,9 +87,22 @@ export default function CategoryPage() {
   };
 
   const handleCategoryClick = (category: Category) => {
-    setSelectedCategory(
-      selectedCategory?._id === category._id ? null : category
-    );
+    const newCategory =
+      selectedCategory?._id === category._id ? null : category;
+    setSelectedCategory(newCategory);
+
+    // Scroll to category detail card when a category is selected
+    if (newCategory) {
+      setTimeout(() => {
+        const detailCard = document.getElementById("category-detail-card");
+        if (detailCard) {
+          detailCard.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }
+      }, 100);
+    }
   };
 
   return (
@@ -97,7 +110,7 @@ export default function CategoryPage() {
       {/* Breadcrumbs */}
       <div className="bg-white py-3 border-b border-[#D4C5B9]/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <HomeBreadcrumb currentPage="Category" />
+          <HomeBreadcrumb currentPage="Categories" />
         </div>
       </div>
 
@@ -161,6 +174,7 @@ export default function CategoryPage() {
                         transition={{ duration: 0.5, delay: index * 0.1 }}
                       >
                         <Card
+                          id="category-card"
                           className={`cursor-pointer transition-all duration-300 hover:shadow-2xl border overflow-hidden group ${
                             isSelected
                               ? "ring-2 ring-[#7F6244] shadow-2xl border-[#7F6244] transform scale-105"
@@ -224,7 +238,10 @@ export default function CategoryPage() {
             className="mb-12"
           >
             {/* Category Detail Card */}
-            <Card className="mb-8 border-[#9CA986]/30 bg-gradient-to-r from-white to-[#FAF8F5]">
+            <Card
+              className="mb-8 border-[#9CA986]/30 bg-gradient-to-r from-white to-[#FAF8F5]"
+              id="category-detail-card"
+            >
               <CardContent className="p-8">
                 <div className="grid md:grid-cols-2 gap-8 items-center">
                   <div>

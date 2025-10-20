@@ -60,9 +60,15 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     }
   }, [mounted, hasVerified, isLoggedIn, router, isLoginPage]);
 
-  const handleLogout = () => {
-    logout();
-    router.push("/admin/login");
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push("/admin/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Still redirect to login even if logout fails
+      router.push("/admin/login");
+    }
   };
 
   if (!mounted) {

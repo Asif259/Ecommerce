@@ -26,6 +26,44 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or expired token');
     }
   }
+
+  async validateAdminWithDetails(
+    token: string,
+  ): Promise<{ isLoggedIn: boolean; user?: any }> {
+    if (!token) {
+      throw new UnauthorizedException('Token not provided');
+    }
+
+    try {
+      const decodedToken = this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET,
+      });
+
+      // Fetch full user details from database
+      const admin = await this.adminModel
+        .findById(decodedToken.id)
+        .select('-passwordHash')
+        .exec();
+
+      if (!admin) {
+        throw new UnauthorizedException('Admin not found');
+      }
+
+      return {
+        isLoggedIn: true,
+        user: {
+          userId: (admin as any)._id.toString(),
+          email: admin.email,
+          role: admin.role,
+          createdAt: (admin as any).createdAt,
+          updatedAt: (admin as any).updatedAt,
+          lastLogin: admin.lastLogin,
+        },
+      };
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+  }
   async login(
     email: string,
     password: string,
@@ -55,5 +93,9 @@ export class AuthService {
         expiresIn: '24h',
       }),
     };
+  }
+
+  async userCount(): Promise<number> {
+    return await this.adminModel.countDocuments();
   }
 }

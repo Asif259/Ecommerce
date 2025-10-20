@@ -55,13 +55,22 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-muted/40">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#FAF8F5] to-[#D4C5B9]/20">
+      <Card className="w-full max-w-md shadow-2xl border-[#9CA986]/20">
+        <CardHeader className="space-y-4">
+          <div className="flex justify-center">
+            <div className="w-20 h-20 mb-2">
+              <img
+                src="/logo.png"
+                alt="Home Decor And More Logo"
+                className="w-full h-full object-contain"
+              />
+            </div>
+          </div>
+          <CardTitle className="text-2xl font-bold text-center text-[#3D3D3D]">
             Admin Login
           </CardTitle>
-          <CardDescription className="text-center">
+          <CardDescription className="text-center text-[#5A5A5A]">
             Enter your credentials to access the admin dashboard
           </CardDescription>
         </CardHeader>

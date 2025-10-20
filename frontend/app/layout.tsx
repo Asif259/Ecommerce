@@ -15,9 +15,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Fenian Gadgets - Your Trusted Source for Electronics",
   description:
-    "Discover the latest and greatest gadgets and electronics at Fenian Gadgets. Quality products at competitive prices with free shipping on orders over $50.",
+    "Discover curated collections of beautiful home decor, furniture, and accessories. Transform your house into a home with our handpicked selection. Free shipping on orders over ৳50.",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({
@@ -36,7 +39,7 @@ export default function RootLayout({
         <Toaster
           position="top-right"
           toastOptions={{
-            duration: 3000,
+            duration: 1500,
             style: {
               background: "#FAF8F5",
               color: "#3D3D3D",

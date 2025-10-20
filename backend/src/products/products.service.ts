@@ -38,7 +38,13 @@ export class ProductsService {
       );
     }
 
-    const product = new this.productModel(createProductDto);
+    // Create product with both category ObjectId and name
+    const product = new this.productModel({
+      ...createProductDto,
+      category: (category as any)._id, // Store ObjectId reference
+      categoryName: category.name, // Store name for quick queries
+    });
+
     return product.save();
   }
 
@@ -62,14 +68,32 @@ export class ProductsService {
     const filter: any = {};
 
     if (category) {
-      filter.category = { $regex: new RegExp(`^${category}$`, 'i') };
+      // Backward compatible: search both categoryName and category fields
+      filter.$or = [
+        { categoryName: { $regex: new RegExp(`^${category}$`, 'i') } },
+        { category: { $regex: new RegExp(`^${category}$`, 'i') } },
+      ];
     }
 
     if (search) {
-      filter.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-      ];
+      // If category filter exists, we need to combine filters
+      if (filter.$or) {
+        filter.$and = [
+          { $or: filter.$or },
+          {
+            $or: [
+              { name: { $regex: search, $options: 'i' } },
+              { description: { $regex: search, $options: 'i' } },
+            ],
+          },
+        ];
+        delete filter.$or;
+      } else {
+        filter.$or = [
+          { name: { $regex: search, $options: 'i' } },
+          { description: { $regex: search, $options: 'i' } },
+        ];
+      }
     }
 
     if (minPrice !== undefined || maxPrice !== undefined) {
@@ -132,6 +156,23 @@ export class ProductsService {
           `Category "${updateProductDto.category}" is not active. Please activate it first.`,
         );
       }
+
+      // Update both category ObjectId and name
+      const updateData = {
+        ...updateProductDto,
+        category: (category as any)._id,
+        categoryName: category.name,
+      };
+
+      const product = await this.productModel
+        .findByIdAndUpdate(id, updateData, { new: true })
+        .exec();
+
+      if (!product) {
+        throw new NotFoundException('Product not found');
+      }
+
+      return product;
     }
 
     const product = await this.productModel
@@ -166,13 +207,24 @@ export class ProductsService {
     return product.save();
   }
 
-  async findByCategory(category: string): Promise<Product[]> {
-    return this.productModel
+  async findByCategory(
+    category: string,
+  ): Promise<{ products: Product[]; total: number }> {
+    // Backward compatible: search both categoryName and category fields
+    const products = await this.productModel
       .find({
-        category: { $regex: new RegExp(`^${category}$`, 'i') },
+        $or: [
+          { categoryName: { $regex: new RegExp(`^${category}$`, 'i') } },
+          { category: { $regex: new RegExp(`^${category}$`, 'i') } },
+        ],
         isActive: true,
       })
       .exec();
+
+    return {
+      products,
+      total: products.length,
+    };
   }
 
   async getFeaturedProducts(limit: number = 10): Promise<Product[]> {
@@ -241,13 +293,22 @@ export class ProductsService {
       description: string;
     }[]
   > {
+    // Backward compatible: try categoryName first, fallback to category
     const categories = await this.productModel.aggregate([
       { $match: { isActive: true } },
       {
+        $addFields: {
+          // Use categoryName if exists, otherwise use category (for backward compatibility)
+          effectiveCategory: {
+            $ifNull: ['$categoryName', '$category'],
+          },
+        },
+      },
+      {
         $group: {
-          _id: { $toLower: '$category' },
+          _id: { $toLower: '$effectiveCategory' },
           count: { $sum: 1 },
-          originalCategory: { $min: '$category' }, // Use $min for deterministic result
+          originalCategory: { $min: '$effectiveCategory' },
         },
       },
       {
@@ -257,7 +318,7 @@ export class ProductsService {
           _id: 0,
         },
       },
-      { $sort: { count: -1 } }, // Sort by count descending
+      { $sort: { count: -1 } },
     ]);
 
     // Add hero images to categories - fetch from database first, then fallback to hardcoded

@@ -29,8 +29,8 @@ export class AuthController {
     res.cookie('access_token', result.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax', 
-      domain: 'localhost', 
+      sameSite: 'lax',
+      domain: 'localhost',
       maxAge: 86400000,
     });
 
@@ -46,14 +46,14 @@ export class AuthController {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       domain: 'localhost',
-      maxAge: 0, 
+      maxAge: 0,
     });
 
     return { message: 'Logout successful' };
   }
 
   @Get('verify')
-  validateToken(@Req() req: Request, @Res() res: Response) {
+  async validateToken(@Req() req: Request, @Res() res: Response) {
     const token = (req as any).cookies?.access_token;
     if (!token) {
       return res
@@ -61,12 +61,17 @@ export class AuthController {
         .json({ message: 'Token not found' });
     }
     try {
-      const result = this.authService.validateAdmin(token);
+      const result = await this.authService.validateAdminWithDetails(token);
       return res.status(HttpStatus.OK).json(result);
     } catch (error) {
       return res
         .status(HttpStatus.UNAUTHORIZED)
         .json({ message: error.message });
     }
+  }
+
+  @Get('user-count')
+  async getUserCount() {
+    return await this.authService.userCount();
   }
 }

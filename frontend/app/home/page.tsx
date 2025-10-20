@@ -483,41 +483,48 @@ export default function HomePage() {
             {isClient &&
               featuredProducts.map((product, index) => (
                 <div key={product._id} className="product-card">
-                  <Card className="group hover:shadow-2xl transition-all duration-300 border border-[#D4C5B9]/20 overflow-hidden bg-white hover:border-[#9CA986]/30">
-                    <div className="aspect-square overflow-hidden relative">
-                      {product.images && product.images.length > 0 ? (
-                        <img
-                          src={product.images[0]}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-[#FAF8F5] to-[#D4C5B9]/20 flex items-center justify-center">
-                          <HomeIcon className="h-16 w-16 text-[#9CA986]" />
-                        </div>
-                      )}
-                      {product.discount > 0 && (
-                        <Badge className="absolute top-3 left-3 bg-gradient-to-r from-[#8B7E6A] to-[#7F6244] text-white px-3 py-1 border-0">
-                          -{product.discount}% OFF
-                        </Badge>
-                      )}
-                      <Button
-                        size="sm"
-                        onClick={() => handleToggleFavorite(product)}
-                        className="absolute top-3 right-3 transition-all duration-300 bg-white/90 backdrop-blur-sm hover:bg-white rounded-full w-10 h-10 p-0 shadow-lg hover:scale-110"
-                        variant="secondary"
-                      >
-                        <Heart
-                          className={`h-5 w-5 text-red-500 ${
-                            isFavorite(product._id) ? "fill-red-500" : ""
-                          }`}
-                        />
-                      </Button>
-                    </div>
+                  <Card className="group hover:shadow-2xl transition-all duration-300 border border-[#D4C5B9]/20 overflow-hidden bg-white hover:border-[#9CA986]/30 relative">
+                    <Link href={`/products/${product._id}`}>
+                      <div className="aspect-square overflow-hidden relative cursor-pointer">
+                        {product.images && product.images.length > 0 ? (
+                          <img
+                            src={product.images[0]}
+                            alt={product.name}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-[#FAF8F5] to-[#D4C5B9]/20 flex items-center justify-center">
+                            <HomeIcon className="h-16 w-16 text-[#9CA986]" />
+                          </div>
+                        )}
+                        {product.discount > 0 && (
+                          <Badge className="absolute top-3 left-3 bg-gradient-to-r from-[#8B7E6A] to-[#7F6244] text-white px-3 py-1 border-0">
+                            -{product.discount}% OFF
+                          </Badge>
+                        )}
+                      </div>
+                    </Link>
+                    <Button
+                      size="sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleToggleFavorite(product);
+                      }}
+                      className="absolute top-3 right-3 transition-all duration-300 bg-white/90 backdrop-blur-sm hover:bg-white rounded-full w-10 h-10 p-0 shadow-lg hover:scale-110 z-10"
+                      variant="secondary"
+                    >
+                      <Heart
+                        className={`h-5 w-5 text-red-500 ${
+                          isFavorite(product._id) ? "fill-red-500" : ""
+                        }`}
+                      />
+                    </Button>
                     <CardContent className="p-5">
-                      <h4 className="font-semibold text-base mb-2 line-clamp-2 text-[#3D3D3D] group-hover:text-[#7F6244] transition-colors">
-                        {product.name}
-                      </h4>
+                      <Link href={`/products/${product._id}`}>
+                        <h4 className="font-semibold text-base mb-2 line-clamp-2 text-[#3D3D3D] group-hover:text-[#7F6244] transition-colors cursor-pointer">
+                          {product.name}
+                        </h4>
+                      </Link>
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
                           <p className="text-2xl font-bold text-[#3D3D3D]">
@@ -545,7 +552,10 @@ export default function HomePage() {
                         whileTap={{ scale: 0.97 }}
                       >
                         <Button
-                          onClick={() => handleAddToCart(product)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleAddToCart(product);
+                          }}
                           disabled={
                             product.stock === 0 || addedToCart === product._id
                           }
@@ -763,11 +773,38 @@ export default function HomePage() {
 
         {/* Footer Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          {/* Social Media Icons */}
+          {/* Logo and Brand */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
+            className="flex flex-col items-center mb-12"
+          >
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              transition={{ duration: 0.3 }}
+              className="w-20 h-20 mb-4"
+            >
+              <img
+                src="/logo.png"
+                alt="Home Decor And More Logo"
+                className="w-full h-full object-contain"
+              />
+            </motion.div>
+            <h3 className="text-2xl font-bold text-white mb-2">
+              Home Decor And More
+            </h3>
+            <p className="text-white/60 text-center max-w-md">
+              Transform your house into a home with our curated collection of
+              beautiful decor and furniture.
+            </p>
+          </motion.div>
+
+          {/* Social Media Icons */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
             className="flex justify-center gap-6 mb-12"
           >
             {[
@@ -811,7 +848,7 @@ export default function HomePage() {
           <motion.nav
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
             className="flex flex-wrap justify-center gap-8 mb-12"
           >
             {[
@@ -843,7 +880,7 @@ export default function HomePage() {
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
             className="text-center"
           >
             <p className="text-white/60 text-sm">

@@ -45,7 +45,6 @@ interface ShippingAddress {
   city: string;
   state: string;
   zipCode: string;
-  country: string;
   phone: string;
 }
 
@@ -60,6 +59,8 @@ interface Order {
   status: string;
   paymentMethod: string;
   paymentStatus: string;
+  paymentPhone?: string;
+  transactionId?: string;
   notes?: string;
   trackingNumber?: string;
   shippedAt?: string;
@@ -307,15 +308,44 @@ export default function OrderDetailPage({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Order Details */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Order Status */}
+            {/* Order Overview */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Package className="h-5 w-5 mr-2" />
-                  Order Status
+                  Order Overview
                 </CardTitle>
+                <CardDescription>
+                  Complete order information and status
+                </CardDescription>
               </CardHeader>
               <CardContent>
+                {/* Order Basic Information */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">
+                      Order Number
+                    </Label>
+                    <p className="mt-1 font-mono font-semibold">
+                      {order.orderNumber}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">
+                      Order ID
+                    </Label>
+                    <p className="mt-1 font-mono text-sm">{order._id}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">
+                      Total Amount
+                    </Label>
+                    <p className="mt-1 text-lg font-bold text-green-600">
+                      ৳{order.totalAmount.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <Label className="text-sm font-medium text-muted-foreground">
@@ -462,6 +492,117 @@ export default function OrderDetailPage({
               </CardContent>
             </Card>
 
+            {/* Order Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Calendar className="h-5 w-5 mr-2" />
+                  Order Details
+                </CardTitle>
+                <CardDescription>
+                  Complete order information and timestamps
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">
+                        Created At
+                      </Label>
+                      <p className="mt-1">
+                        {new Date(order.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">
+                        Last Updated
+                      </Label>
+                      <p className="mt-1">
+                        {new Date(order.updatedAt).toLocaleString()}
+                      </p>
+                    </div>
+                    {order.shippedAt && (
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">
+                          Shipped At
+                        </Label>
+                        <p className="mt-1">
+                          {new Date(order.shippedAt).toLocaleString()}
+                        </p>
+                      </div>
+                    )}
+                    {order.deliveredAt && (
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">
+                          Delivered At
+                        </Label>
+                        <p className="mt-1">
+                          {new Date(order.deliveredAt).toLocaleString()}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">
+                        Payment Method
+                      </Label>
+                      <p className="mt-1 capitalize">
+                        {order.paymentMethod === "cash"
+                          ? "Cash on Delivery"
+                          : order.paymentMethod === "mobile-banking"
+                          ? "Mobile Banking (Bkash/Nagad)"
+                          : order.paymentMethod}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">
+                        Payment Status
+                      </Label>
+                      <div className="mt-1">
+                        <Badge
+                          variant={
+                            order.paymentStatus === "paid"
+                              ? "default"
+                              : order.paymentStatus === "pending"
+                              ? "secondary"
+                              : "destructive"
+                          }
+                        >
+                          {order.paymentStatus.charAt(0).toUpperCase() +
+                            order.paymentStatus.slice(1)}
+                        </Badge>
+                      </div>
+                    </div>
+                    {order.paymentMethod === "mobile-banking" && (
+                      <>
+                        {order.paymentPhone && (
+                          <div>
+                            <Label className="text-sm font-medium text-muted-foreground">
+                              Payment Phone
+                            </Label>
+                            <p className="mt-1">{order.paymentPhone}</p>
+                          </div>
+                        )}
+                        {order.transactionId && (
+                          <div>
+                            <Label className="text-sm font-medium text-muted-foreground">
+                              Transaction ID
+                            </Label>
+                            <p className="mt-1 font-mono text-sm bg-gray-100 p-2 rounded">
+                              {order.transactionId}
+                            </p>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Notes */}
             <Card>
               <CardHeader>
@@ -499,26 +640,97 @@ export default function OrderDetailPage({
                   <User className="h-5 w-5 mr-2" />
                   Customer Information
                 </CardTitle>
+                <CardDescription>
+                  Customer details and contact information
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  <div>
-                    <Label className="text-sm font-medium text-muted-foreground">
-                      Name
-                    </Label>
-                    <p className="mt-1">{order.customerName}</p>
+                <div className="space-y-4">
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <User className="h-4 w-4 text-blue-600" />
+                      <span className="font-medium text-blue-800">
+                        Customer Details
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">
+                          Full Name
+                        </Label>
+                        <p className="mt-1 font-medium">{order.customerName}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">
+                          Email Address
+                        </Label>
+                        <p className="mt-1">{order.customerEmail}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <Label className="text-sm font-medium text-muted-foreground">
-                      Email
-                    </Label>
-                    <p className="mt-1">{order.customerEmail}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-muted-foreground">
-                      Payment Method
-                    </Label>
-                    <p className="mt-1 capitalize">{order.paymentMethod}</p>
+
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <CreditCard className="h-4 w-4 text-green-600" />
+                      <span className="font-medium text-green-800">
+                        Payment Information
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">
+                          Payment Method
+                        </Label>
+                        <p className="mt-1 capitalize">
+                          {order.paymentMethod === "cash"
+                            ? "Cash on Delivery"
+                            : order.paymentMethod === "mobile-banking"
+                            ? "Mobile Banking (Bkash/Nagad)"
+                            : order.paymentMethod}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">
+                          Payment Status
+                        </Label>
+                        <div className="mt-1">
+                          <Badge
+                            variant={
+                              order.paymentStatus === "paid"
+                                ? "default"
+                                : order.paymentStatus === "pending"
+                                ? "secondary"
+                                : "destructive"
+                            }
+                          >
+                            {order.paymentStatus.charAt(0).toUpperCase() +
+                              order.paymentStatus.slice(1)}
+                          </Badge>
+                        </div>
+                      </div>
+                      {order.paymentMethod === "mobile-banking" && (
+                        <>
+                          {order.paymentPhone && (
+                            <div>
+                              <Label className="text-sm font-medium text-muted-foreground">
+                                Payment Phone
+                              </Label>
+                              <p className="mt-1">{order.paymentPhone}</p>
+                            </div>
+                          )}
+                          {order.transactionId && (
+                            <div>
+                              <Label className="text-sm font-medium text-muted-foreground">
+                                Transaction ID
+                              </Label>
+                              <p className="mt-1 font-mono text-sm bg-gray-100 p-2 rounded">
+                                {order.transactionId}
+                              </p>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -531,45 +743,50 @@ export default function OrderDetailPage({
                   <MapPin className="h-5 w-5 mr-2" />
                   Shipping Address
                 </CardTitle>
+                <CardDescription>
+                  Complete delivery address information
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  <div>
-                    <Label className="text-sm font-medium text-muted-foreground">
-                      Name
-                    </Label>
-                    <p className="mt-1">
-                      {order.shippingAddress.firstName}{" "}
-                      {order.shippingAddress.lastName}
-                    </p>
+                <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <MapPin className="h-4 w-4 text-orange-600" />
+                    <span className="font-medium text-orange-800">
+                      Delivery Address
+                    </span>
                   </div>
-                  <div>
-                    <Label className="text-sm font-medium text-muted-foreground">
-                      Address
-                    </Label>
-                    <p className="mt-1">{order.shippingAddress.address}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-muted-foreground">
-                      City, State ZIP
-                    </Label>
-                    <p className="mt-1">
-                      {order.shippingAddress.city},{" "}
-                      {order.shippingAddress.state}{" "}
-                      {order.shippingAddress.zipCode}
-                    </p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-muted-foreground">
-                      Country
-                    </Label>
-                    <p className="mt-1">{order.shippingAddress.country}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-muted-foreground">
-                      Phone
-                    </Label>
-                    <p className="mt-1">{order.shippingAddress.phone}</p>
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">
+                        Recipient Name
+                      </Label>
+                      <p className="mt-1 font-medium">
+                        {order.shippingAddress.firstName}{" "}
+                        {order.shippingAddress.lastName}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">
+                        Street Address
+                      </Label>
+                      <p className="mt-1">{order.shippingAddress.address}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">
+                        City, State ZIP
+                      </Label>
+                      <p className="mt-1">
+                        {order.shippingAddress.city},{" "}
+                        {order.shippingAddress.state}{" "}
+                        {order.shippingAddress.zipCode}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">
+                        Contact Phone
+                      </Label>
+                      <p className="mt-1">{order.shippingAddress.phone}</p>
+                    </div>
                   </div>
                 </div>
               </CardContent>

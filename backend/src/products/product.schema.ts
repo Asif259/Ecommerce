@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types, Schema as MongooseSchema } from 'mongoose';
 
 export type ProductDocument = Product & Document;
 
@@ -14,8 +14,12 @@ export class Product {
   @Prop({ required: true })
   price: number;
 
-  @Prop({ required: true })
-  category: string;
+  // Using Mixed type to support both ObjectId (new) and String (old) for backward compatibility
+  @Prop({ type: MongooseSchema.Types.Mixed, ref: 'Category' })
+  category: Types.ObjectId | string;
+
+  @Prop()
+  categoryName: string; // Denormalized for faster queries - also used for backward compatibility
 
   @Prop({ type: [String], default: [] })
   images: string[];

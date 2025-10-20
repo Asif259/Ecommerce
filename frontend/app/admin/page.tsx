@@ -95,7 +95,7 @@ export default function AdminDashboard() {
             </p>
           </div>
           <div className="hidden sm:flex items-center space-x-4">
-            <Badge variant="outline" className="text-sm">
+            <Badge variant="outline" className="text-sm bg-blue-50 text-blue-700 border-blue-200">
               {user?.email}
             </Badge>
             <div className="flex items-center space-x-2 text-sm text-gray-500">

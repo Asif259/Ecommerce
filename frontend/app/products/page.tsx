@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,13 +38,19 @@ import { useCartStore } from "@/stores/cartStore";
 import { useFavoritesStore } from "@/stores/favoritesStore";
 
 export default function ProductsPage() {
+  const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<
     { category: string; count: number }[]
   >([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(
+    () => {
+      // Initialize with URL parameter if present
+      return searchParams.get("category") || null;
+    }
+  );
   const [sortBy, setSortBy] = useState("name");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 });
@@ -105,21 +112,19 @@ export default function ProductsPage() {
       // Add category filter only if a specific category is selected (not null)
       if (selectedCategory !== null && selectedCategory.trim() !== "") {
         queryParams.category = selectedCategory.trim();
-        console.log("Filtering by category:", selectedCategory);
+        console.log("🔍 Filtering by category:", selectedCategory);
+        console.log("📦 Query params being sent:", queryParams);
       } else {
-        console.log("Showing all products");
+        console.log("📋 Showing all products");
       }
 
       const productsResponse = await getProducts(queryParams);
 
-      console.log("Products response:", productsResponse);
+      console.log("✅ Products response:", productsResponse);
       console.log(
-        "Number of products returned:",
-        productsResponse.products?.length
+        "📊 Total products for this category:",
+        productsResponse.total
       );
-      console.log("Total products:", productsResponse.total);
-      console.log("Current page:", currentPage);
-      console.log("Limit:", queryParams.limit);
 
       setProducts(productsResponse.products || []);
       setTotalPages(Math.ceil((productsResponse.total || 0) / 32));
@@ -193,8 +198,9 @@ export default function ProductsPage() {
         },
         1
       );
+      console.log("Added to cart:", product);
       setAddedToCart(product._id);
-      setTimeout(() => setAddedToCart(null), 2000);
+      setTimeout(() => setAddedToCart(null), 1000);
       toast.success(`${product.name} added to cart!`);
     } else {
       toast.error("Product is out of stock");
@@ -421,42 +427,49 @@ export default function ProductsPage() {
                 {products.map((product) => (
                   <Card
                     key={product._id}
-                    className="group hover:shadow-lg transition-shadow duration-300 flex flex-col h-full border border-[#D4C5B9]/20"
+                    className="group hover:shadow-lg transition-shadow duration-300 flex flex-col h-full border border-[#D4C5B9]/20 relative"
                   >
-                    <div className="aspect-square overflow-hidden rounded-t-lg relative flex items-center justify-center bg-[#FAF8F5]">
-                      {product.images && product.images.length > 0 ? (
-                        <img
-                          src={product.images[0]}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-[#FAF8F5] flex items-center justify-center">
-                          <Package className="h-16 w-16 text-[#9CA986]" />
-                        </div>
-                      )}
-                      {product.discount > 0 && (
-                        <Badge className="absolute top-2 left-2 bg-[#8B7E6A]">
-                          -{product.discount}%
-                        </Badge>
-                      )}
-                      <Button
-                        size="sm"
-                        onClick={() => handleToggleFavorite(product)}
-                        className="absolute top-2 right-2 bg-white hover:bg-[#FAF8F5]"
-                        variant="secondary"
-                      >
-                        <Heart
-                          className={`h-4 w-4 text-red-500 ${
-                            isFavorite(product._id) ? "fill-red-500" : ""
-                          }`}
-                        />
-                      </Button>
-                    </div>
+                    <Link href={`/products/${product._id}`}>
+                      <div className="aspect-square overflow-hidden rounded-t-lg relative flex items-center justify-center bg-[#FAF8F5] cursor-pointer">
+                        {product.images && product.images.length > 0 ? (
+                          <img
+                            src={product.images[0]}
+                            alt={product.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-[#FAF8F5] flex items-center justify-center">
+                            <Package className="h-16 w-16 text-[#9CA986]" />
+                          </div>
+                        )}
+                        {product.discount > 0 && (
+                          <Badge className="absolute top-2 left-2 bg-[#8B7E6A]">
+                            -{product.discount}%
+                          </Badge>
+                        )}
+                      </div>
+                    </Link>
+                    <Button
+                      size="sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleToggleFavorite(product);
+                      }}
+                      className="absolute top-2 right-2 bg-white hover:bg-[#FAF8F5] z-10"
+                      variant="secondary"
+                    >
+                      <Heart
+                        className={`h-4 w-4 text-red-500 ${
+                          isFavorite(product._id) ? "fill-red-500" : ""
+                        }`}
+                      />
+                    </Button>
                     <CardContent className="p-4 flex flex-col">
-                      <h4 className="font-medium text-sm mb-2 line-clamp-2 flex-shrink-0 text-[#3D3D3D]">
-                        {product.name}
-                      </h4>
+                      <Link href={`/products/${product._id}`}>
+                        <h4 className="font-medium text-sm mb-2 line-clamp-2 flex-shrink-0 text-[#3D3D3D] hover:text-[#7F6244] cursor-pointer transition-colors">
+                          {product.name}
+                        </h4>
+                      </Link>
                       <div className="flex items-center justify-between mb-2 flex-shrink-0">
                         <p className="text-lg font-bold text-[#3D3D3D]">
                           ৳{product.price.toFixed(2)}
@@ -470,7 +483,10 @@ export default function ProductsPage() {
                       </div>
                       <div className="mt-auto">
                         <Button
-                          onClick={() => handleAddToCart(product)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleAddToCart(product);
+                          }}
                           disabled={
                             product.stock === 0 || addedToCart === product._id
                           }
@@ -496,25 +512,29 @@ export default function ProductsPage() {
                     className="group hover:shadow-lg transition-shadow duration-300 border border-[#D4C5B9]/20"
                   >
                     <div className="flex">
-                      <div className="w-32 h-32 overflow-hidden rounded-l-lg">
-                        {product.images && product.images.length > 0 ? (
-                          <img
-                            src={product.images[0]}
-                            alt={product.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-[#FAF8F5] flex items-center justify-center">
-                            <Package className="h-8 w-8 text-[#9CA986]" />
-                          </div>
-                        )}
-                      </div>
+                      <Link href={`/products/${product._id}`}>
+                        <div className="w-32 h-32 overflow-hidden rounded-l-lg cursor-pointer">
+                          {product.images && product.images.length > 0 ? (
+                            <img
+                              src={product.images[0]}
+                              alt={product.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-[#FAF8F5] flex items-center justify-center">
+                              <Package className="h-8 w-8 text-[#9CA986]" />
+                            </div>
+                          )}
+                        </div>
+                      </Link>
                       <CardContent className="p-4 flex-1">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
-                            <h4 className="font-medium text-lg mb-2 text-[#3D3D3D]">
-                              {product.name}
-                            </h4>
+                            <Link href={`/products/${product._id}`}>
+                              <h4 className="font-medium text-lg mb-2 text-[#3D3D3D] hover:text-[#7F6244] cursor-pointer transition-colors">
+                                {product.name}
+                              </h4>
+                            </Link>
                             <p className="text-[#5A5A5A] text-sm mb-3 line-clamp-2">
                               {product.description}
                             </p>
@@ -533,7 +553,10 @@ export default function ProductsPage() {
                           <div className="flex flex-col space-y-2">
                             <Button
                               size="sm"
-                              onClick={() => handleToggleFavorite(product)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleToggleFavorite(product);
+                              }}
                               variant="outline"
                               className="border-[#D4C5B9] hover:bg-[#FAF8F5]"
                             >
@@ -544,7 +567,10 @@ export default function ProductsPage() {
                               />
                             </Button>
                             <Button
-                              onClick={() => handleAddToCart(product)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleAddToCart(product);
+                              }}
                               disabled={
                                 product.stock === 0 ||
                                 addedToCart === product._id

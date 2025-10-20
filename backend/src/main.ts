@@ -21,10 +21,10 @@ async function bootstrap() {
     credentials: true,
   });
 
-   const jwtService = app.get(JwtService);
-   const reflector = app.get(Reflector);
+  const jwtService = app.get(JwtService);
+  const reflector = app.get(Reflector);
 
-   app.useGlobalGuards(new JwtAuthGuard(jwtService, reflector));
+  app.useGlobalGuards(new JwtAuthGuard(jwtService, reflector));
   const port = process.env.PORT || 4000;
   await app.listen(port);
   console.log(`backend running on http://localhost:${port}`);

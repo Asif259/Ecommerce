@@ -191,25 +191,22 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/40">
+    <div className="min-h-screen bg-muted/40 p-6 lg:p-8">
       {/* Header */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Link href="/admin">
-                <Button variant="outline" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Dashboard
-                </Button>
-              </Link>
-              <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-            </div>
+      <div className="mb-8">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Settings
+            </h1>
+            <p className="text-gray-600">
+              Manage your profile and store settings
+            </p>
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-8xl mx-auto">
         {/* Success/Error Messages */}
         {success && (
           <Alert className="mb-6 border-green-200 bg-green-50">

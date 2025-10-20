@@ -46,9 +46,6 @@ export class ShippingAddressDto {
   zipCode: string;
 
   @IsString()
-  country: string;
-
-  @IsString()
   phone: string;
 }
 
@@ -75,6 +72,14 @@ export class CreateOrderDto {
   @IsOptional()
   @IsString()
   paymentMethod?: string;
+
+  @IsOptional()
+  @IsString()
+  paymentPhone?: string;
+
+  @IsOptional()
+  @IsString()
+  transactionId?: string;
 
   @IsOptional()
   @IsString()

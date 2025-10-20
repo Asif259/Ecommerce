@@ -18,16 +18,24 @@ export class CategoriesService {
   async findAll(): Promise<Category[]> {
     return this.categoryModel
       .find({ isActive: true })
+      .populate('productCount')
       .sort({ displayOrder: 1, name: 1 })
       .exec();
   }
 
   async findAllIncludingInactive(): Promise<Category[]> {
-    return this.categoryModel.find().sort({ displayOrder: 1, name: 1 }).exec();
+    return this.categoryModel
+      .find()
+      .populate('productCount')
+      .sort({ displayOrder: 1, name: 1 })
+      .exec();
   }
 
   async findOne(id: string): Promise<Category> {
-    const category = await this.categoryModel.findById(id).exec();
+    const category = await this.categoryModel
+      .findById(id)
+      .populate('productCount')
+      .exec();
     if (!category) {
       throw new NotFoundException('Category not found');
     }
