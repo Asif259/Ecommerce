@@ -109,14 +109,14 @@ export default function CategoryPage() {
     <div className="min-h-screen bg-[#FAF8F5]">
       {/* Breadcrumbs */}
       <div className="bg-white py-3 border-b border-[#D4C5B9]/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
           <HomeBreadcrumb currentPage="Categories" />
         </div>
       </div>
 
       {/* Header */}
       <div className="bg-gradient-to-r from-[#7F6244] to-[#6B5139] text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -311,52 +311,58 @@ export default function CategoryPage() {
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <Card className="group hover:shadow-2xl transition-all duration-300 border border-[#D4C5B9]/20 hover:border-[#9CA986]/50">
-                        <div className="aspect-square overflow-hidden rounded-t-lg relative">
-                          {product.images && product.images.length > 0 ? (
-                            <img
-                              src={product.images[0]}
-                              alt={product.name}
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-[#FAF8F5] to-[#D4C5B9]/20 flex items-center justify-center">
-                              <Package className="h-16 w-16 text-[#9CA986]" />
-                            </div>
-                          )}
-                          {product.discount > 0 && (
-                            <Badge className="absolute top-3 left-3 bg-gradient-to-r from-[#8B7E6A] to-[#7F6244] text-white border-0">
-                              -{product.discount}% OFF
-                            </Badge>
-                          )}
-                          <Button
-                            size="sm"
-                            className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-white/90 backdrop-blur-sm hover:bg-white text-[#7F6244] rounded-full w-10 h-10 p-0"
-                            variant="secondary"
-                          >
-                            <Heart className="h-5 w-5" />
-                          </Button>
-                        </div>
-                        <CardContent className="p-5">
-                          <h4 className="font-semibold text-base mb-2 line-clamp-2 text-[#3D3D3D] group-hover:text-[#7F6244] transition-colors">
-                            {product.name}
-                          </h4>
-                          <div className="flex items-center justify-between mb-4">
-                            <p className="text-2xl font-bold text-[#3D3D3D]">
-                              ৳{product.price.toFixed(2)}
-                            </p>
-                            <div className="flex items-center">
-                              <Star className="h-4 w-4 text-[#D4C5B9] fill-current" />
-                              <span className="ml-1 text-sm font-medium text-[#5A5A5A]">
-                                {product.rating.toFixed(1)}
-                              </span>
-                            </div>
+                      <Link href={`/products/${product._id}`}>
+                        <Card className="group hover:shadow-2xl transition-all duration-300 border border-[#D4C5B9]/20 hover:border-[#9CA986]/50 cursor-pointer">
+                          <div className="aspect-square overflow-hidden rounded-t-lg relative">
+                            {product.images && product.images.length > 0 ? (
+                              <img
+                                src={product.images[0]}
+                                alt={product.name}
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-[#FAF8F5] to-[#D4C5B9]/20 flex items-center justify-center">
+                                <Package className="h-16 w-16 text-[#9CA986]" />
+                              </div>
+                            )}
+                            {product.discount > 0 && (
+                              <Badge className="absolute top-3 left-3 bg-gradient-to-r from-[#8B7E6A] to-[#7F6244] text-white border-0">
+                                -{product.discount}% OFF
+                              </Badge>
+                            )}
+                            <Button
+                              size="sm"
+                              className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-white/90 backdrop-blur-sm hover:bg-white text-[#7F6244] rounded-full w-10 h-10 p-0"
+                              variant="secondary"
+                              onClick={(e) => e.preventDefault()}
+                            >
+                              <Heart className="h-5 w-5" />
+                            </Button>
                           </div>
-                          <Button className="w-full bg-gradient-to-r from-[#7F6244] to-[#9CA986] hover:from-[#6B5139] hover:to-[#8B7E6A] text-white font-semibold">
-                            Add to Cart
-                          </Button>
-                        </CardContent>
-                      </Card>
+                          <CardContent className="p-5">
+                            <h4 className="font-semibold text-base mb-2 line-clamp-2 text-[#3D3D3D] group-hover:text-[#7F6244] transition-colors">
+                              {product.name}
+                            </h4>
+                            <div className="flex items-center justify-between mb-4">
+                              <p className="text-2xl font-bold text-[#3D3D3D]">
+                                ৳{product.price.toFixed(2)}
+                              </p>
+                              <div className="flex items-center">
+                                <Star className="h-4 w-4 text-[#D4C5B9] fill-current" />
+                                <span className="ml-1 text-sm font-medium text-[#5A5A5A]">
+                                  {product.rating.toFixed(1)}
+                                </span>
+                              </div>
+                            </div>
+                            <Button
+                              className="w-full bg-gradient-to-r from-[#7F6244] to-[#9CA986] hover:from-[#6B5139] hover:to-[#8B7E6A] text-white font-semibold"
+                              onClick={(e) => e.preventDefault()}
+                            >
+                              Add to Cart
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      </Link>
                     </motion.div>
                   ))}
               </div>

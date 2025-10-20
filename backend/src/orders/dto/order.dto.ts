@@ -28,22 +28,16 @@ export class OrderItemDto {
 
 export class ShippingAddressDto {
   @IsString()
-  firstName: string;
-
-  @IsString()
-  lastName: string;
+  fullName: string;
 
   @IsString()
   address: string;
 
   @IsString()
-  city: string;
+  upazila: string;
 
   @IsString()
-  state: string;
-
-  @IsString()
-  zipCode: string;
+  district: string;
 
   @IsString()
   phone: string;

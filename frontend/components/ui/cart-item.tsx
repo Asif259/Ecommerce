@@ -48,7 +48,7 @@ export function CartItem({ item, onUpdateQuantity, onRemove }: CartItemProps) {
           {item.name}
         </h3>
         <p className="text-[#7F6244] font-semibold text-sm mt-1">
-          ${item.price.toFixed(2)}
+          ৳{item.price.toFixed(2)}
         </p>
 
         {/* Quantity Controls */}
@@ -77,7 +77,7 @@ export function CartItem({ item, onUpdateQuantity, onRemove }: CartItemProps) {
 
       {/* Price and Remove */}
       <div className="flex flex-col items-end justify-between">
-        <p className="font-semibold text-[#3D3D3D]">${subtotal.toFixed(2)}</p>
+        <p className="font-semibold text-[#3D3D3D]">৳{subtotal.toFixed(2)}</p>
         <Button
           variant="ghost"
           size="sm"

@@ -39,12 +39,10 @@ interface OrderItem {
 }
 
 interface ShippingAddress {
-  firstName: string;
-  lastName: string;
+  fullName: string;
   address: string;
-  city: string;
-  state: string;
-  zipCode: string;
+  upazila: string;
+  district: string;
   phone: string;
 }
 
@@ -63,6 +61,7 @@ interface Order {
   transactionId?: string;
   notes?: string;
   trackingNumber?: string;
+  confirmedAt?: string;
   shippedAt?: string;
   deliveredAt?: string;
   createdAt: string;
@@ -448,6 +447,169 @@ export default function OrderDetailPage({
               </CardContent>
             </Card>
 
+            {/* Order Timeline */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Clock className="h-5 w-5 mr-2" />
+                  Order Timeline
+                </CardTitle>
+                <CardDescription>
+                  Track the progress of your order
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="relative">
+                  {/* Vertical Timeline Line */}
+                  <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+
+                  {/* Timeline Items */}
+                  <div className="space-y-6">
+                    {/* Order Placed */}
+                    <div className="relative flex items-start">
+                      <div className="absolute left-0 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center z-10">
+                        <CheckCircle className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="ml-12">
+                        <h4 className="text-sm font-semibold text-gray-900">
+                          Order Placed
+                        </h4>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(order.createdAt).toLocaleString()}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Order #{order.orderNumber} has been created
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Order Confirmed */}
+                    {(order.status === "confirmed" ||
+                      order.status === "shipped" ||
+                      order.status === "delivered") && (
+                      <div className="relative flex items-start">
+                        <div
+                          className={`absolute left-0 w-8 h-8 rounded-full flex items-center justify-center z-10 ${
+                            order.confirmedAt ? "bg-blue-500" : "bg-gray-300"
+                          }`}
+                        >
+                          <CheckCircle className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="ml-12">
+                          <h4 className="text-sm font-semibold text-gray-900">
+                            Order Confirmed
+                          </h4>
+                          <p className="text-sm text-muted-foreground">
+                            {order.confirmedAt
+                              ? new Date(order.confirmedAt).toLocaleString()
+                              : new Date(order.updatedAt).toLocaleString()}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Your order has been confirmed and is being processed
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Order Shipped */}
+                    {(order.status === "shipped" ||
+                      order.status === "delivered") && (
+                      <div className="relative flex items-start">
+                        <div
+                          className={`absolute left-0 w-8 h-8 rounded-full flex items-center justify-center z-10 ${
+                            order.shippedAt ? "bg-purple-500" : "bg-gray-300"
+                          }`}
+                        >
+                          <Truck className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="ml-12">
+                          <h4 className="text-sm font-semibold text-gray-900">
+                            Order Shipped
+                          </h4>
+                          <p className="text-sm text-muted-foreground">
+                            {order.shippedAt
+                              ? new Date(order.shippedAt).toLocaleString()
+                              : "Pending"}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {order.trackingNumber
+                              ? `Tracking: ${order.trackingNumber}`
+                              : "Your order is on the way"}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Order Delivered */}
+                    {order.status === "delivered" && (
+                      <div className="relative flex items-start">
+                        <div
+                          className={`absolute left-0 w-8 h-8 rounded-full flex items-center justify-center z-10 ${
+                            order.deliveredAt ? "bg-green-600" : "bg-gray-300"
+                          }`}
+                        >
+                          <Package className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="ml-12">
+                          <h4 className="text-sm font-semibold text-gray-900">
+                            Order Delivered
+                          </h4>
+                          <p className="text-sm text-muted-foreground">
+                            {order.deliveredAt
+                              ? new Date(order.deliveredAt).toLocaleString()
+                              : "Pending"}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Your order has been successfully delivered
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Order Cancelled */}
+                    {order.status === "cancelled" && (
+                      <div className="relative flex items-start">
+                        <div className="absolute left-0 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center z-10">
+                          <XCircle className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="ml-12">
+                          <h4 className="text-sm font-semibold text-gray-900">
+                            Order Cancelled
+                          </h4>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(order.updatedAt).toLocaleString()}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            This order has been cancelled
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Pending Status Indicator */}
+                    {order.status === "pending" && (
+                      <div className="relative flex items-start">
+                        <div className="absolute left-0 w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center z-10 animate-pulse">
+                          <Clock className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="ml-12">
+                          <h4 className="text-sm font-semibold text-gray-900">
+                            Awaiting Confirmation
+                          </h4>
+                          <p className="text-sm text-muted-foreground">
+                            Pending review
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Your order is being reviewed by our team
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Order Items */}
             <Card>
               <CardHeader>
@@ -522,6 +684,16 @@ export default function OrderDetailPage({
                         {new Date(order.updatedAt).toLocaleString()}
                       </p>
                     </div>
+                    {order.confirmedAt && (
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">
+                          Confirmed At
+                        </Label>
+                        <p className="mt-1">
+                          {new Date(order.confirmedAt).toLocaleString()}
+                        </p>
+                      </div>
+                    )}
                     {order.shippedAt && (
                       <div>
                         <Label className="text-sm font-medium text-muted-foreground">
@@ -761,25 +933,26 @@ export default function OrderDetailPage({
                         Recipient Name
                       </Label>
                       <p className="mt-1 font-medium">
-                        {order.shippingAddress.firstName}{" "}
-                        {order.shippingAddress.lastName}
+                        {order.shippingAddress.fullName}
                       </p>
                     </div>
                     <div>
                       <Label className="text-sm font-medium text-muted-foreground">
-                        Street Address
+                        Address
                       </Label>
                       <p className="mt-1">{order.shippingAddress.address}</p>
                     </div>
                     <div>
                       <Label className="text-sm font-medium text-muted-foreground">
-                        City, State ZIP
+                        Upazila/Thana
                       </Label>
-                      <p className="mt-1">
-                        {order.shippingAddress.city},{" "}
-                        {order.shippingAddress.state}{" "}
-                        {order.shippingAddress.zipCode}
-                      </p>
+                      <p className="mt-1">{order.shippingAddress.upazila}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">
+                        District
+                      </Label>
+                      <p className="mt-1">{order.shippingAddress.district}</p>
                     </div>
                     <div>
                       <Label className="text-sm font-medium text-muted-foreground">

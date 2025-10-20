@@ -109,7 +109,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 <div className="flex items-center justify-between text-lg">
                   <span className="font-semibold text-[#3D3D3D]">Subtotal</span>
                   <span className="font-bold text-[#7F6244]">
-                    ${total.toFixed(2)}
+                    ৳{total.toFixed(2)}
                   </span>
                 </div>
 

@@ -186,7 +186,7 @@ export default function CheckoutSuccessPage() {
                       </span>
                     </div>
                     <span className="font-semibold text-[#7F6244]">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      ৳{(item.price * item.quantity).toFixed(2)}
                     </span>
                   </div>
                 ))}
@@ -197,7 +197,7 @@ export default function CheckoutSuccessPage() {
                 <div className="flex justify-between items-center text-xl font-bold">
                   <span className="text-[#3D3D3D]">Total</span>
                   <span className="text-[#7F6244]">
-                    ${order.totalAmount.toFixed(2)}
+                    ৳{order.totalAmount.toFixed(2)}
                   </span>
                 </div>
               </div>

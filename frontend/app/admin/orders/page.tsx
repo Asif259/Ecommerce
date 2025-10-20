@@ -41,13 +41,10 @@ interface OrderItem {
 }
 
 interface ShippingAddress {
-  firstName: string;
-  lastName: string;
+  fullName: string;
   address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
+  upazila: string;
+  district: string;
   phone: string;
 }
 
@@ -252,7 +249,9 @@ export default function OrdersPage() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Orders Management
             </h1>
-            <p className="text-gray-600">Manage customer orders and track their status</p>
+            <p className="text-gray-600">
+              Manage customer orders and track their status
+            </p>
           </div>
           <Link href="/admin/orders/new" passHref>
             <Button
@@ -266,266 +265,256 @@ export default function OrdersPage() {
         </div>
       </div>
 
-        {/* Stats */}
-        <div className="mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <ShoppingCart className="h-5 w-5 mr-2" />
-                Orders Overview
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold">
-                    {orderStats.totalOrders}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Total Orders
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold">
-                    ৳{orderStats.totalRevenue?.toFixed(2) || "0.00"}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Total Revenue
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold">
-                    {orderStats.pendingOrders}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Pending Orders
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold">
-                    {orderStats.completedOrders}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Completed Orders
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Filters */}
-        <Card className="mb-6">
+      {/* Stats */}
+      <div className="mb-8">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <Filter className="h-5 w-5 mr-2" />
-              Filters & Search
+              <ShoppingCart className="h-5 w-5 mr-2" />
+              Orders Overview
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search by order number..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold">
+                  {orderStats.totalOrders}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Total Orders
                 </div>
               </div>
-              <div className="sm:w-48">
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">All Statuses</option>
-                  <option value="pending">Pending</option>
-                  <option value="confirmed">Confirmed</option>
-                  <option value="shipped">Shipped</option>
-                  <option value="delivered">Delivered</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
+              <div className="text-center">
+                <div className="text-2xl font-bold">
+                  ৳{orderStats.totalRevenue?.toFixed(2) || "0.00"}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Total Revenue
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold">
+                  {orderStats.pendingOrders}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Pending Orders
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold">
+                  {orderStats.completedOrders}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Completed Orders
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
-
-        {/* Error Alert */}
-        {error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Orders Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Orders List</CardTitle>
-            <CardDescription>
-              Manage customer orders and track their status
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                <p className="mt-4 text-muted-foreground">Loading orders...</p>
-              </div>
-            ) : orders.length === 0 ? (
-              <div className="text-center py-8">
-                <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No orders found</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-4">Order</th>
-                      <th className="text-left p-4">Customer</th>
-                      <th className="text-left p-4">Items</th>
-                      <th className="text-left p-4">Total</th>
-                      <th className="text-left p-4">Status</th>
-                      <th className="text-left p-4">Payment</th>
-                      <th className="text-left p-4">Date</th>
-                      <th className="text-left p-4">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {orders.map((order) => (
-                      <tr
-                        key={order._id}
-                        className="border-b hover:bg-muted/50"
-                      >
-                        <td className="p-4">
-                          <div>
-                            <div className="font-medium">
-                              {order.orderNumber}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {order.paymentMethod}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <div>
-                            <div className="font-medium">
-                              {order.customerName}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {order.customerEmail}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <div className="flex items-center space-x-2">
-                            <Package className="h-4 w-4 text-muted-foreground" />
-                            <span>{order.items.length} item(s)</span>
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <div className="font-medium">
-                            ৳{order.totalAmount.toFixed(2)}
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <div className="flex items-center space-x-2">
-                            {getStatusIcon(order.status)}
-                            <Badge
-                              variant={getStatusBadgeVariant(order.status)}
-                            >
-                              {order.status.charAt(0).toUpperCase() +
-                                order.status.slice(1)}
-                            </Badge>
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <Badge
-                            variant={
-                              order.paymentStatus === "paid"
-                                ? "default"
-                                : "secondary"
-                            }
-                          >
-                            {order.paymentStatus.charAt(0).toUpperCase() +
-                              order.paymentStatus.slice(1)}
-                          </Badge>
-                        </td>
-                        <td className="p-4">
-                          <div className="text-sm">
-                            {new Date(order.createdAt).toLocaleDateString()}
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <div className="flex items-center space-x-2">
-                            <Link href={`/admin/orders/${order._id}`}>
-                              <Button variant="outline" size="sm">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </Link>
-                            <select
-                              value={order.status}
-                              onChange={(e) =>
-                                handleUpdateOrderStatus(
-                                  order._id,
-                                  e.target.value
-                                )
-                              }
-                              className="text-xs px-2 py-1 border rounded"
-                            >
-                              <option value="pending">Pending</option>
-                              <option value="confirmed">Confirmed</option>
-                              <option value="shipped">Shipped</option>
-                              <option value="delivered">Delivered</option>
-                              <option value="cancelled">Cancelled</option>
-                            </select>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between mt-6">
-                <div className="text-sm text-muted-foreground">
-                  Showing {(currentPage - 1) * 10 + 1} to{" "}
-                  {Math.min(currentPage * 10, totalOrders)} of {totalOrders}{" "}
-                  orders
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    disabled={currentPage === 1}
-                  >
-                    Previous
-                  </Button>
-                  <span className="text-sm">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage(Math.min(totalPages, currentPage + 1))
-                    }
-                    disabled={currentPage === totalPages}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </div>
+
+      {/* Filters */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Filter className="h-5 w-5 mr-2" />
+            Filters & Search
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by order number..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <div className="sm:w-48">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="shipped">Shipped</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Error Alert */}
+      {error && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Orders Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Orders List</CardTitle>
+          <CardDescription>
+            Manage customer orders and track their status
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-4 text-muted-foreground">Loading orders...</p>
+            </div>
+          ) : orders.length === 0 ? (
+            <div className="text-center py-8">
+              <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">No orders found</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-4">Order</th>
+                    <th className="text-left p-4">Customer</th>
+                    <th className="text-left p-4">Items</th>
+                    <th className="text-left p-4">Total</th>
+                    <th className="text-left p-4">Status</th>
+                    <th className="text-left p-4">Payment</th>
+                    <th className="text-left p-4">Date</th>
+                    <th className="text-left p-4">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map((order) => (
+                    <tr key={order._id} className="border-b hover:bg-muted/50">
+                      <td className="p-4">
+                        <div>
+                          <div className="font-medium">{order.orderNumber}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {order.paymentMethod}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div>
+                          <div className="font-medium">
+                            {order.customerName}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {order.customerEmail}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center space-x-2">
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                          <span>{order.items.length} item(s)</span>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="font-medium">
+                          ৳{order.totalAmount.toFixed(2)}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center space-x-2">
+                          {getStatusIcon(order.status)}
+                          <Badge variant={getStatusBadgeVariant(order.status)}>
+                            {order.status.charAt(0).toUpperCase() +
+                              order.status.slice(1)}
+                          </Badge>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <Badge
+                          variant={
+                            order.paymentStatus === "paid"
+                              ? "default"
+                              : "secondary"
+                          }
+                        >
+                          {order.paymentStatus.charAt(0).toUpperCase() +
+                            order.paymentStatus.slice(1)}
+                        </Badge>
+                      </td>
+                      <td className="p-4">
+                        <div className="text-sm">
+                          {new Date(order.createdAt).toLocaleDateString()}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center space-x-2">
+                          <Link href={`/admin/orders/${order._id}`}>
+                            <Button variant="outline" size="sm">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                          <select
+                            value={order.status}
+                            onChange={(e) =>
+                              handleUpdateOrderStatus(order._id, e.target.value)
+                            }
+                            className="text-xs px-2 py-1 border rounded"
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="shipped">Shipped</option>
+                            <option value="delivered">Delivered</option>
+                            <option value="cancelled">Cancelled</option>
+                          </select>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-6">
+              <div className="text-sm text-muted-foreground">
+                Showing {(currentPage - 1) * 10 + 1} to{" "}
+                {Math.min(currentPage * 10, totalOrders)} of {totalOrders}{" "}
+                orders
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setCurrentPage(Math.min(totalPages, currentPage + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

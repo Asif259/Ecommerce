@@ -134,11 +134,11 @@ export default function ProductDetailPage() {
     return (
       <div className="min-h-screen bg-[#FAF8F5]">
         <div className="bg-white py-3 border-b border-[#D4C5B9]/20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="h-6 bg-[#FAF8F5] rounded w-64 animate-pulse"></div>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <div className="aspect-square bg-[#FAF8F5] rounded-lg animate-pulse"></div>
             <div className="space-y-4">
@@ -184,7 +184,7 @@ export default function ProductDetailPage() {
     <div className="min-h-screen bg-[#FAF8F5]">
       {/* Breadcrumbs */}
       <div className="bg-white py-3 border-b border-[#D4C5B9]/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center space-x-2 text-sm">
             <Link href="/" className="text-[#8B7E6A] hover:text-[#7F6244]">
               Home
@@ -202,7 +202,7 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Back Button */}
         <Link
           href="/products"
@@ -262,18 +262,6 @@ export default function ProductDetailPage() {
 
           {/* Product Information */}
           <div className="space-y-6">
-            {/* Category & SKU */}
-            <div className="flex items-center gap-3">
-              <Badge className="bg-[#9CA986] hover:bg-[#8B9877]">
-                {product.category}
-              </Badge>
-              {product.sku && (
-                <span className="text-sm text-[#8B7E6A]">
-                  SKU: {product.sku}
-                </span>
-              )}
-            </div>
-
             {/* Product Name */}
             <h1 className="text-4xl font-bold text-[#3D3D3D]">
               {product.name}

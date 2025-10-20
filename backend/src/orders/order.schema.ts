@@ -21,22 +21,16 @@ export class OrderItem {
 @Schema({ _id: false })
 export class ShippingAddress {
   @Prop({ required: true })
-  firstName: string;
-
-  @Prop({ required: true })
-  lastName: string;
+  fullName: string;
 
   @Prop({ required: true })
   address: string;
 
   @Prop({ required: true })
-  city: string;
+  upazila: string;
 
   @Prop({ required: true })
-  state: string;
-
-  @Prop({ required: true })
-  zipCode: string;
+  district: string;
 
   @Prop({ required: true })
   phone: string;
@@ -82,6 +76,9 @@ export class Order {
 
   @Prop()
   trackingNumber: string;
+
+  @Prop()
+  confirmedAt: Date;
 
   @Prop()
   shippedAt: Date;

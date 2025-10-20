@@ -104,7 +104,11 @@ export class OrdersService {
   async update(id: string, updateOrderDto: UpdateOrderDto): Promise<Order> {
     const updateData: any = { ...updateOrderDto };
 
-    // Handle status changes
+    // Handle status changes and set timestamps automatically
+    if (updateOrderDto.status === 'confirmed' && !updateData.confirmedAt) {
+      updateData.confirmedAt = new Date();
+    }
+
     if (updateOrderDto.status === 'shipped' && !updateData.shippedAt) {
       updateData.shippedAt = new Date();
     }

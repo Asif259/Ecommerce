@@ -31,12 +31,10 @@ import { motion } from "framer-motion";
 import api from "@/utils/api";
 
 interface ShippingAddress {
-  firstName: string;
-  lastName: string;
+  fullName: string;
   address: string;
-  city: string;
-  state: string;
-  zipCode: string;
+  upazila: string;
+  district: string;
   phone: string;
 }
 
@@ -66,12 +64,10 @@ export default function CheckoutPage() {
   const [mounted, setMounted] = useState(false);
 
   const [shippingAddress, setShippingAddress] = useState<ShippingAddress>({
-    firstName: "",
-    lastName: "",
+    fullName: "",
     address: "",
-    city: "",
-    state: "",
-    zipCode: "",
+    upazila: "",
+    district: "",
     phone: "",
   });
 
@@ -117,12 +113,10 @@ export default function CheckoutPage() {
     const requiredFields = [
       customerInfo.email,
       customerInfo.name,
-      shippingAddress.firstName,
-      shippingAddress.lastName,
+      shippingAddress.fullName,
       shippingAddress.address,
-      shippingAddress.city,
-      shippingAddress.state,
-      shippingAddress.zipCode,
+      shippingAddress.upazila,
+      shippingAddress.district,
       shippingAddress.phone,
     ];
 
@@ -253,7 +247,7 @@ export default function CheckoutPage() {
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           <Link
@@ -356,36 +350,21 @@ export default function CheckoutPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName" className="text-[#5A5A5A]">
-                      First Name *
-                    </Label>
+                <div className="space-y-2">
+                  <Label htmlFor="fullName" className="text-[#5A5A5A]">
+                    Full Name *
+                  </Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 h-4 w-4 text-[#8B7E6A]" />
                     <Input
-                      id="firstName"
+                      id="fullName"
                       type="text"
-                      value={shippingAddress.firstName}
+                      value={shippingAddress.fullName}
                       onChange={(e) =>
-                        handleInputChange("firstName", e.target.value)
+                        handleInputChange("fullName", e.target.value)
                       }
-                      className="border-[#D4C5B9] focus:border-[#7F6244]"
-                      placeholder="John"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName" className="text-[#5A5A5A]">
-                      Last Name *
-                    </Label>
-                    <Input
-                      id="lastName"
-                      type="text"
-                      value={shippingAddress.lastName}
-                      onChange={(e) =>
-                        handleInputChange("lastName", e.target.value)
-                      }
-                      className="border-[#D4C5B9] focus:border-[#7F6244]"
-                      placeholder="Doe"
+                      className="pl-10 border-[#D4C5B9] focus:border-[#7F6244]"
+                      placeholder="আপনার পূর্ণ নাম / Your Full Name"
                       required
                     />
                   </div>
@@ -393,67 +372,54 @@ export default function CheckoutPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="address" className="text-[#5A5A5A]">
-                    Street Address *
+                    Address *
                   </Label>
-                  <Input
-                    id="address"
-                    type="text"
-                    value={shippingAddress.address}
-                    onChange={(e) =>
-                      handleInputChange("address", e.target.value)
-                    }
-                    className="border-[#D4C5B9] focus:border-[#7F6244]"
-                    placeholder="123 Main Street"
-                    required
-                  />
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-[#8B7E6A]" />
+                    <Input
+                      id="address"
+                      type="text"
+                      value={shippingAddress.address}
+                      onChange={(e) =>
+                        handleInputChange("address", e.target.value)
+                      }
+                      className="pl-10 border-[#D4C5B9] focus:border-[#7F6244]"
+                      placeholder="House/Road/Village (বাড়ি/রোড/গ্রাম)"
+                      required
+                    />
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="city" className="text-[#5A5A5A]">
-                      City *
+                    <Label htmlFor="upazila" className="text-[#5A5A5A]">
+                      Upazila/Thana *
                     </Label>
                     <Input
-                      id="city"
+                      id="upazila"
                       type="text"
-                      value={shippingAddress.city}
+                      value={shippingAddress.upazila}
                       onChange={(e) =>
-                        handleInputChange("city", e.target.value)
+                        handleInputChange("upazila", e.target.value)
                       }
                       className="border-[#D4C5B9] focus:border-[#7F6244]"
-                      placeholder="New York"
+                      placeholder="উপজেলা/থানা"
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="state" className="text-[#5A5A5A]">
-                      State *
+                    <Label htmlFor="district" className="text-[#5A5A5A]">
+                      District *
                     </Label>
                     <Input
-                      id="state"
+                      id="district"
                       type="text"
-                      value={shippingAddress.state}
+                      value={shippingAddress.district}
                       onChange={(e) =>
-                        handleInputChange("state", e.target.value)
+                        handleInputChange("district", e.target.value)
                       }
                       className="border-[#D4C5B9] focus:border-[#7F6244]"
-                      placeholder="NY"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="zipCode" className="text-[#5A5A5A]">
-                      ZIP Code *
-                    </Label>
-                    <Input
-                      id="zipCode"
-                      type="text"
-                      value={shippingAddress.zipCode}
-                      onChange={(e) =>
-                        handleInputChange("zipCode", e.target.value)
-                      }
-                      className="border-[#D4C5B9] focus:border-[#7F6244]"
-                      placeholder="10001"
+                      placeholder="জেলা / District"
                       required
                     />
                   </div>
@@ -473,10 +439,13 @@ export default function CheckoutPage() {
                         handleInputChange("phone", e.target.value)
                       }
                       className="pl-10 border-[#D4C5B9] focus:border-[#7F6244]"
-                      placeholder="(555) 123-4567"
+                      placeholder="01XXXXXXXXX"
                       required
                     />
                   </div>
+                  <p className="text-xs text-[#8B7E6A] mt-1">
+                    Enter your mobile number for delivery contact
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -524,10 +493,10 @@ export default function CheckoutPage() {
                     />
                     <div>
                       <div className="font-medium text-[#3D3D3D]">
-                        Mobile Banking Payment
+                        bKash / Nagad / Rocket
                       </div>
                       <div className="text-sm text-[#8B7E6A]">
-                        Pay via mobile banking
+                        Pay via mobile banking (বিকাশ/নগদ/রকেট)
                       </div>
                     </div>
                   </label>
@@ -629,7 +598,7 @@ export default function CheckoutPage() {
                         value={paymentPhone}
                         onChange={(e) => setPaymentPhone(e.target.value)}
                         className="border-[#D4C5B9] focus:border-[#7F6244]"
-                        placeholder="Type here..."
+                        placeholder="পেমেন্ট মোবাইল নাম্বার দিন"
                         required={paymentMethod === "mobile-banking"}
                       />
                     </div>
@@ -644,7 +613,7 @@ export default function CheckoutPage() {
                         value={transactionId}
                         onChange={(e) => setTransactionId(e.target.value)}
                         className="border-[#D4C5B9] focus:border-[#7F6244]"
-                        placeholder="Type here..."
+                        placeholder="ট্রানজ্যাকশন আইডি দিন"
                         required={paymentMethod === "mobile-banking"}
                       />
                     </div>
@@ -688,7 +657,7 @@ export default function CheckoutPage() {
                   onChange={(e) => setNotes(e.target.value)}
                   className="w-full px-3 py-2 border border-[#D4C5B9] rounded-md focus:outline-none focus:ring-2 focus:ring-[#7F6244] focus:border-[#7F6244] resize-none"
                   rows={3}
-                  placeholder="Special delivery instructions, gift message, etc."
+                  placeholder="ডেলিভারীর জন্য বিশেষ নির্দেশনা, উপহার বার্তা ইত্যাদি লিখুন"
                 />
               </CardContent>
             </Card>
@@ -763,11 +732,11 @@ export default function CheckoutPage() {
                           {item.name}
                         </h4>
                         <p className="text-sm text-[#8B7E6A]">
-                          Qty: {item.quantity} × ${item.price.toFixed(2)}
+                          Qty: {item.quantity} × ৳{item.price.toFixed(2)}
                         </p>
                       </div>
                       <div className="font-semibold text-[#7F6244]">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        ৳{(item.price * item.quantity).toFixed(2)}
                       </div>
                     </motion.div>
                   ))}
@@ -778,7 +747,7 @@ export default function CheckoutPage() {
                   <div className="flex justify-between text-[#5A5A5A]">
                     <span>Subtotal</span>
                     <span className="font-semibold">
-                      ${subtotal.toFixed(2)}
+                      ৳{subtotal.toFixed(2)}
                     </span>
                   </div>
                   <div className="flex justify-between text-[#5A5A5A]">
@@ -791,7 +760,7 @@ export default function CheckoutPage() {
                         Total
                       </span>
                       <span className="text-2xl font-bold text-[#7F6244]">
-                        ${total.toFixed(2)}
+                        ৳{total.toFixed(2)}
                       </span>
                     </div>
                   </div>
