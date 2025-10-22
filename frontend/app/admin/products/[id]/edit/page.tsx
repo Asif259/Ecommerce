@@ -62,6 +62,7 @@ export default function EditProductPage({
   const resolvedParams = use(params);
   const [specKey, setSpecKey] = useState("");
   const [specValue, setSpecValue] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
 
   const [formData, setFormData] = useState<ProductFormData>({
     name: "",
@@ -157,12 +158,12 @@ export default function EditProductPage({
   };
 
   const handleAddImage = () => {
-    const imageUrl = prompt("Enter image URL:");
     if (imageUrl && imageUrl.trim()) {
       setFormData((prev) => ({
         ...prev,
         images: [...prev.images, imageUrl.trim()],
       }));
+      setImageUrl("");
     }
   };
 
@@ -438,13 +439,21 @@ export default function EditProductPage({
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center space-x-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleAddImage}
-                >
+                <Input
+                  placeholder="Enter image URL"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddImage();
+                    }
+                  }}
+                  className="flex-1"
+                />
+                <Button type="button" onClick={handleAddImage}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Image URL
+                  Add
                 </Button>
               </div>
 
@@ -568,7 +577,11 @@ export default function EditProductPage({
                 Cancel
               </Button>
             </Link>
-            <Button type="submit" disabled={loading} className="bg-blue-500 hover:bg-blue-600 text-white">
+            <Button
+              type="submit"
+              disabled={loading}
+              className="bg-blue-500 hover:bg-blue-600 text-white"
+            >
               <Save className="h-4 w-4 mr-2 " />
               {loading ? "Updating Product..." : "Update Product"}
             </Button>

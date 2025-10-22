@@ -10,7 +10,7 @@ dotenv.config();
 @Module({
   imports: [
     MongooseModule.forRoot(
-      process.env.MONGODB_URI || 'mongodb://localhost:27017/fenyon',
+      process.env.MONGODB_URI || 'mongodb://localhost:27017/test',
     ),
     AuthModule,
     ProductsModule,

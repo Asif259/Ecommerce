@@ -78,7 +78,9 @@ export default function CategoriesManagement() {
   };
 
   const handleEdit = (category: Category) => {
-    document.getElementById("add-category-form")?.scrollIntoView({ behavior: "smooth" });
+    document
+      .getElementById("add-category-form")
+      ?.scrollIntoView({ behavior: "smooth" });
     setEditingCategory(category);
     setFormData({
       name: category.name,
@@ -268,10 +270,7 @@ export default function CategoriesManagement() {
               </div>
 
               <div className="flex gap-2">
-                <Button
-                  type="submit"
-                  className="bg-[#7F6244] hover:bg-[#6B5139]"
-                >
+                <Button type="submit" className="bg-blue-500 hover:bg-blue-600">
                   <Check className="mr-2 h-4 w-4" />
                   {editingCategory ? "Update Category" : "Create Category"}
                 </Button>
@@ -304,7 +303,7 @@ export default function CategoriesManagement() {
               <p className="text-gray-600 mb-4">No categories found</p>
               <Button
                 onClick={() => setShowForm(true)}
-                className="bg-[#7F6244] hover:bg-[#6B5139]"
+                className="bg-blue-500 hover:bg-blue-600"
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Add First Category
@@ -354,8 +353,7 @@ export default function CategoriesManagement() {
                         size="sm"
                         variant="outline"
                         onClick={() => handleEdit(category)}
-                                  className="flex-1"
-                                  
+                        className="flex-1"
                       >
                         <Edit2 className="h-4 w-4 mr-1" />
                         Edit

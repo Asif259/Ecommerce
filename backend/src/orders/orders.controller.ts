@@ -38,6 +38,12 @@ export class OrdersController {
     return this.ordersService.getOrderStats();
   }
 
+  @Get('customer/:customerEmail')
+  @Public()
+  findByCustomerEmail(@Param('customerEmail') customerEmail: string) {
+    return this.ordersService.orderByCustomerEmail(customerEmail);
+  }
+
   @Get('analytics/revenue-by-month')
   @UseGuards(JwtAuthGuard)
   getRevenueByMonth(@Query('months') months?: number) {
@@ -64,6 +70,18 @@ export class OrdersController {
   @UseGuards(JwtAuthGuard)
   getOrdersByStatus() {
     return this.ordersService.getOrdersByStatus();
+  }
+
+  @Get('analytics/monthly')
+  @UseGuards(JwtAuthGuard)
+  getMonthlyAnalytics(
+    @Query('month') month: number,
+    @Query('year') year: number,
+  ) {
+    return this.ordersService.getMonthlyAnalytics(
+      parseInt(month.toString()),
+      parseInt(year.toString()),
+    );
   }
 
   @Get('order-number/:orderNumber')

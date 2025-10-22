@@ -50,6 +50,7 @@ export default function AddProductPage() {
   const [success, setSuccess] = useState("");
   const [specKey, setSpecKey] = useState("");
   const [specValue, setSpecValue] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
 
   const [formData, setFormData] = useState<ProductFormData>({
@@ -128,12 +129,12 @@ export default function AddProductPage() {
   };
 
   const handleAddImage = () => {
-    const imageUrl = prompt("Enter image URL:");
     if (imageUrl && imageUrl.trim()) {
       setFormData((prev) => ({
         ...prev,
         images: [...prev.images, imageUrl.trim()],
       }));
+      setImageUrl("");
     }
   };
 
@@ -239,7 +240,7 @@ export default function AddProductPage() {
     <div className="min-h-screen bg-muted/40">
       {/* Header */}
       <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
               <Link href="/admin/products">
@@ -256,7 +257,7 @@ export default function AddProductPage() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Success/Error Messages */}
         {success && (
           <Alert className="mb-6 border-green-200 bg-green-50">
@@ -456,13 +457,25 @@ export default function AddProductPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center space-x-2">
+                <Input
+                  placeholder="Enter image URL (e.g. https://example.com/image.jpg)"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddImage();
+                    }
+                  }}
+                  className="flex-1"
+                />
                 <Button
                   type="button"
-                  variant="outline"
                   onClick={handleAddImage}
+                  className="bg-blue-500 hover:bg-blue-600"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Image URL
+                  Add
                 </Button>
               </div>
 
@@ -586,7 +599,11 @@ export default function AddProductPage() {
                 Cancel
               </Button>
             </Link>
-            <Button type="submit" disabled={loading}>
+            <Button
+              type="submit"
+              disabled={loading}
+              className="bg-blue-500 hover:bg-blue-600"
+            >
               <Save className="h-4 w-4 mr-2" />
               {loading ? "Creating Product..." : "Create Product"}
             </Button>

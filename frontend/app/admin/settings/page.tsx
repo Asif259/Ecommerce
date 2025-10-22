@@ -261,7 +261,11 @@ export default function SettingsPage() {
                   />
                 </div>
               </div>
-              <Button type="submit" disabled={loading}>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="bg-blue-500 hover:bg-blue-600"
+              >
                 <Save className="h-4 w-4 mr-2" />
                 {loading ? "Saving..." : "Save Profile"}
               </Button>
@@ -342,7 +346,11 @@ export default function SettingsPage() {
                   />
                 </div>
               </div>
-              <Button type="submit" disabled={loading}>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="bg-blue-500 hover:bg-blue-600"
+              >
                 <Save className="h-4 w-4 mr-2" />
                 {loading ? "Changing..." : "Change Password"}
               </Button>

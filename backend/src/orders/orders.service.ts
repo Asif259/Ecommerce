@@ -48,9 +48,13 @@ export class OrdersService {
     return savedOrder;
   }
 
-  async findAll(
-    query: OrderQueryDto,
-  ): Promise<{ orders: Order[]; total: number; page: number; limit: number }> {
+  async findAll(query: OrderQueryDto): Promise<{
+    orders: Order[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
     const { page = 1, limit = 10, status, customerEmail, orderNumber } = query;
     const skip = (page - 1) * limit;
 
@@ -61,11 +65,13 @@ export class OrdersService {
     }
 
     if (customerEmail) {
-      filter.customerEmail = customerEmail;
+      // Use case-insensitive regex for partial email matching
+      filter.customerEmail = { $regex: customerEmail, $options: 'i' };
     }
 
     if (orderNumber) {
-      filter.orderNumber = orderNumber;
+      // Use case-insensitive regex for partial order number matching
+      filter.orderNumber = { $regex: orderNumber, $options: 'i' };
     }
 
     const orders = await this.orderModel
@@ -76,12 +82,14 @@ export class OrdersService {
       .exec();
 
     const total = await this.orderModel.countDocuments(filter);
+    const totalPages = Math.ceil(total / limit);
 
     return {
       orders,
       total,
       page,
       limit,
+      totalPages,
     };
   }
 
@@ -99,6 +107,10 @@ export class OrdersService {
       throw new NotFoundException('Order not found');
     }
     return order;
+  }
+
+  async orderByCustomerEmail(customerEmail: string): Promise<Order[]> {
+    return this.orderModel.find({ customerEmail }).exec();
   }
 
   async update(id: string, updateOrderDto: UpdateOrderDto): Promise<Order> {
@@ -373,11 +385,192 @@ export class OrdersService {
     return result;
   }
 
+  async getMonthlyAnalytics(
+    month: number,
+    year: number,
+  ): Promise<{
+    totalRevenue: number;
+    totalOrders: number;
+    averageOrderValue: number;
+    ordersByStatus: Record<string, number>;
+    topProducts: Array<{
+      productId: string;
+      name: string;
+      sales: number;
+      revenue: number;
+    }>;
+    ordersByDay: Array<{ day: string; orders: number; revenue: number }>;
+    dailyOrders: Array<{ date: string; orders: number; revenue: number }>;
+  }> {
+    // Create date range for the specified month
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
+    // Get total revenue and orders
+    const revenueStats = await this.orderModel.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startDate, $lte: endDate },
+          status: { $ne: 'cancelled' },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: '$totalAmount' },
+          totalOrders: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const totalRevenue = revenueStats[0]?.totalRevenue || 0;
+    const totalOrders = revenueStats[0]?.totalOrders || 0;
+    const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+    // Get orders by status
+    const statusCounts = await this.orderModel.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startDate, $lte: endDate },
+        },
+      },
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const ordersByStatus: Record<string, number> = {};
+    statusCounts.forEach((item) => {
+      ordersByStatus[item._id] = item.count;
+    });
+
+    // Get top products for the month
+    const topProducts = await this.orderModel.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startDate, $lte: endDate },
+          status: { $ne: 'cancelled' },
+        },
+      },
+      {
+        $unwind: '$items',
+      },
+      {
+        $group: {
+          _id: '$items.productId',
+          name: { $first: '$items.name' },
+          sales: { $sum: '$items.quantity' },
+          revenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } },
+        },
+      },
+      {
+        $sort: { revenue: -1 },
+      },
+      {
+        $limit: 5,
+      },
+    ]);
+
+    const topProductsFormatted = topProducts.map((product) => ({
+      productId: product._id.toString(),
+      name: product.name,
+      sales: product.sales,
+      revenue: Math.round(product.revenue * 100) / 100,
+    }));
+
+    // Get orders by day of week for the month
+    const ordersByDayOfWeek = await this.orderModel.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startDate, $lte: endDate },
+          status: { $ne: 'cancelled' },
+        },
+      },
+      {
+        $group: {
+          _id: { $dayOfWeek: '$createdAt' },
+          orders: { $sum: 1 },
+          revenue: { $sum: '$totalAmount' },
+        },
+      },
+      {
+        $sort: { _id: 1 },
+      },
+    ]);
+
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const ordersByDay = dayNames.map((day, index) => ({
+      day,
+      orders: 0,
+      revenue: 0,
+    }));
+
+    ordersByDayOfWeek.forEach((item) => {
+      const dayIndex = item._id === 1 ? 0 : item._id - 1;
+      ordersByDay[dayIndex] = {
+        day: dayNames[dayIndex],
+        orders: item.orders,
+        revenue: Math.round(item.revenue * 100) / 100,
+      };
+    });
+
+    // Reorder to start from Monday
+    const reorderedDays = [
+      ordersByDay[1], // Mon
+      ordersByDay[2], // Tue
+      ordersByDay[3], // Wed
+      ordersByDay[4], // Thu
+      ordersByDay[5], // Fri
+      ordersByDay[6], // Sat
+      ordersByDay[0], // Sun
+    ];
+
+    // Get daily orders for the month
+    const dailyOrdersData = await this.orderModel.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startDate, $lte: endDate },
+          status: { $ne: 'cancelled' },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' },
+            day: { $dayOfMonth: '$createdAt' },
+          },
+          orders: { $sum: 1 },
+          revenue: { $sum: '$totalAmount' },
+        },
+      },
+      {
+        $sort: { '_id.day': 1 },
+      },
+    ]);
+
+    const dailyOrders = dailyOrdersData.map((item) => ({
+      date: `${item._id.year}-${String(item._id.month).padStart(2, '0')}-${String(item._id.day).padStart(2, '0')}`,
+      orders: item.orders,
+      revenue: Math.round(item.revenue * 100) / 100,
+    }));
+
+    return {
+      totalRevenue: Math.round(totalRevenue * 100) / 100,
+      totalOrders,
+      averageOrderValue: Math.round(averageOrderValue * 100) / 100,
+      ordersByStatus,
+      topProducts: topProductsFormatted,
+      ordersByDay: reorderedDays,
+      dailyOrders,
+    };
+  }
+
   private generateOrderNumber(): string {
-    const timestamp = Date.now().toString();
-    const random = Math.floor(Math.random() * 1000)
-      .toString()
-      .padStart(3, '0');
-    return `ORD-${timestamp}-${random}`;
+    const random = Math.floor(100000 + Math.random() * 900000);
+    return `ORD-${random}`;
   }
 }

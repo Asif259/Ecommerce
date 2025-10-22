@@ -111,15 +111,30 @@ export default function OrdersPage() {
     }
   }, [isLoggedIn, currentPage, searchTerm, statusFilter]);
 
+  // Reset to page 1 when search term or status filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
+
   const fetchOrders = async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: "10",
-        ...(searchTerm && { orderNumber: searchTerm }),
         ...(statusFilter && { status: statusFilter }),
       });
+
+      // Determine if search term is email or order number
+      if (searchTerm) {
+        if (searchTerm.includes("@")) {
+          // Search by email
+          params.append("customerEmail", searchTerm);
+        } else {
+          // Search by order number
+          params.append("orderNumber", searchTerm);
+        }
+      }
 
       const response = await fetch(`http://localhost:4000/orders?${params}`, {
         credentials: "include",
@@ -327,12 +342,27 @@ export default function OrdersPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by order number..."
+                  placeholder="Search by order number or customer email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
+                {searchTerm && (
+                  <Badge
+                    variant="secondary"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs"
+                  >
+                    {searchTerm.includes("@") ? "Email" : "Order #"}
+                  </Badge>
+                )}
               </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {searchTerm
+                  ? searchTerm.includes("@")
+                    ? `Searching by customer email: ${searchTerm}`
+                    : `Searching by order number: ${searchTerm}`
+                  : "Enter order number (e.g., ORD-1234) or customer email"}
+              </p>
             </div>
             <div className="sm:w-48">
               <select

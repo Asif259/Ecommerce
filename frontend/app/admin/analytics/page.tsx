@@ -15,7 +15,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   BarChart3,
   TrendingUp,
-  TrendingDown,
   DollarSign,
   ShoppingCart,
   Package,
@@ -36,7 +35,8 @@ interface AnalyticsData {
     sales: number;
     revenue: number;
   }>;
-  ordersByDay: Array<{ day: string; orders: number }>;
+  ordersByDay: Array<{ day: string; orders: number; revenue: number }>;
+  dailyOrders?: Array<{ date: string; orders: number; revenue: number }>;
 }
 
 export default function AnalyticsPage() {
@@ -44,6 +44,16 @@ export default function AnalyticsPage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Get current month and year
+  const currentDate = new Date();
+  const [selectedMonth, setSelectedMonth] = useState<number>(
+    currentDate.getMonth() + 1
+  );
+  const [selectedYear, setSelectedYear] = useState<number>(
+    currentDate.getFullYear()
+  );
+
   const [analytics, setAnalytics] = useState<AnalyticsData>({
     totalRevenue: 0,
     totalOrders: 0,
@@ -53,6 +63,7 @@ export default function AnalyticsPage() {
     revenueByMonth: [],
     topProducts: [],
     ordersByDay: [],
+    dailyOrders: [],
   });
 
   useEffect(() => {
@@ -77,64 +88,36 @@ export default function AnalyticsPage() {
     if (isLoggedIn) {
       fetchAnalytics();
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, selectedMonth, selectedYear]);
 
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
 
-      // Fetch all analytics data in parallel
-      const [
-        ordersStatsResponse,
-        productsResponse,
-        revenueByMonthResponse,
-        topProductsResponse,
-        ordersByDayResponse,
-        ordersByStatusResponse,
-      ] = await Promise.all([
-        fetch("http://localhost:4000/orders/stats", {
-          credentials: "include",
-        }),
-        fetch("http://localhost:4000/products?limit=1"),
+      // Fetch monthly analytics and products count
+      const [monthlyAnalyticsResponse, productsResponse] = await Promise.all([
         fetch(
-          "http://localhost:4000/orders/analytics/revenue-by-month?months=6",
+          `http://localhost:4000/orders/analytics/monthly?month=${selectedMonth}&year=${selectedYear}`,
           {
             credentials: "include",
           }
         ),
-        fetch("http://localhost:4000/orders/analytics/top-products?limit=5", {
-          credentials: "include",
-        }),
-        fetch("http://localhost:4000/orders/analytics/orders-by-day", {
-          credentials: "include",
-        }),
-        fetch("http://localhost:4000/orders/analytics/orders-by-status", {
-          credentials: "include",
-        }),
+        fetch("http://localhost:4000/products?limit=1"),
       ]);
 
-      const ordersStats = await ordersStatsResponse.json();
+      const monthlyAnalytics = await monthlyAnalyticsResponse.json();
       const productsData = await productsResponse.json();
-      const revenueByMonth = await revenueByMonthResponse.json();
-      const topProducts = await topProductsResponse.json();
-      const ordersByDay = await ordersByDayResponse.json();
-      const ordersByStatus = await ordersByStatusResponse.json();
-
-      // Calculate average order value
-      const averageOrderValue =
-        ordersStats.totalOrders > 0
-          ? ordersStats.totalRevenue / ordersStats.totalOrders
-          : 0;
 
       setAnalytics({
-        totalRevenue: ordersStats.totalRevenue || 0,
-        totalOrders: ordersStats.totalOrders || 0,
+        totalRevenue: monthlyAnalytics.totalRevenue || 0,
+        totalOrders: monthlyAnalytics.totalOrders || 0,
         totalProducts: productsData.total || 0,
-        averageOrderValue,
-        ordersByStatus,
-        revenueByMonth,
-        topProducts,
-        ordersByDay,
+        averageOrderValue: monthlyAnalytics.averageOrderValue || 0,
+        ordersByStatus: monthlyAnalytics.ordersByStatus || {},
+        revenueByMonth: [], // Not needed for monthly view
+        topProducts: monthlyAnalytics.topProducts || [],
+        ordersByDay: monthlyAnalytics.ordersByDay || [],
+        dailyOrders: monthlyAnalytics.dailyOrders || [],
       });
     } catch (err) {
       console.error("Error fetching analytics:", err);
@@ -164,6 +147,31 @@ export default function AnalyticsPage() {
     );
   }
 
+  const months = [
+    { value: 1, label: "January" },
+    { value: 2, label: "February" },
+    { value: 3, label: "March" },
+    { value: 4, label: "April" },
+    { value: 5, label: "May" },
+    { value: 6, label: "June" },
+    { value: 7, label: "July" },
+    { value: 8, label: "August" },
+    { value: 9, label: "September" },
+    { value: 10, label: "October" },
+    { value: 11, label: "November" },
+    { value: 12, label: "December" },
+  ];
+
+  // Generate years array (current year and 5 years back)
+  const years = Array.from(
+    { length: 6 },
+    (_, i) => currentDate.getFullYear() - i
+  );
+
+  const getMonthName = (month: number) => {
+    return months.find((m) => m.value === month)?.label || "";
+  };
+
   return (
     <div className="min-h-screen bg-muted/40 p-6 lg:p-8">
       {/* Header */}
@@ -173,13 +181,44 @@ export default function AnalyticsPage() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Analytics & Reports
             </h1>
-            <p className="text-gray-600">View detailed analytics and reports</p>
+            <p className="text-gray-600">
+              View detailed analytics for {getMonthName(selectedMonth)}{" "}
+              {selectedYear}
+            </p>
           </div>
-          {loading && (
-            <Badge variant="secondary" className="animate-pulse">
-              Refreshing...
-            </Badge>
-          )}
+          <div className="flex items-center gap-4 flex-wrap">
+            {/* Month Selector */}
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+              className="flex h-10 w-[160px] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {months.map((month) => (
+                <option key={month.value} value={month.value}>
+                  {month.label}
+                </option>
+              ))}
+            </select>
+
+            {/* Year Selector */}
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+              className="flex h-10 w-[120px] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {years.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+
+            {loading && (
+              <Badge variant="secondary" className="animate-pulse">
+                Refreshing...
+              </Badge>
+            )}
+          </div>
         </div>
       </div>
 
@@ -206,8 +245,7 @@ export default function AnalyticsPage() {
                   ৳{analytics.totalRevenue.toFixed(2)}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  <TrendingUp className="inline h-3 w-3 mr-1" />
-                  +12.5% from last month
+                  For {getMonthName(selectedMonth)} {selectedYear}
                 </p>
               </CardContent>
             </Card>
@@ -224,8 +262,7 @@ export default function AnalyticsPage() {
                   {analytics.totalOrders}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  <TrendingUp className="inline h-3 w-3 mr-1" />
-                  +8.2% from last month
+                  For {getMonthName(selectedMonth)} {selectedYear}
                 </p>
               </CardContent>
             </Card>
@@ -242,8 +279,7 @@ export default function AnalyticsPage() {
                   ৳{analytics.averageOrderValue.toFixed(2)}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  <TrendingDown className="inline h-3 w-3 mr-1" />
-                  -2.1% from last month
+                  For {getMonthName(selectedMonth)} {selectedYear}
                 </p>
               </CardContent>
             </Card>
@@ -267,35 +303,54 @@ export default function AnalyticsPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            {/* Revenue Chart */}
+            {/* Daily Revenue Chart */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <TrendingUp className="h-5 w-5 mr-2" />
-                  Revenue Trend
+                  Daily Revenue Trend
                 </CardTitle>
                 <CardDescription>
-                  Monthly revenue over the last 6 months
+                  Revenue breakdown for {getMonthName(selectedMonth)}{" "}
+                  {selectedYear}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {analytics.revenueByMonth.map((item) => (
-                    <div
-                      key={item.month}
-                      className="flex items-center justify-between"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        <span className="text-sm font-medium">
-                          {item.month}
-                        </span>
-                      </div>
-                      <div className="text-sm font-bold">
-                        ৳{item.revenue.toLocaleString()}
-                      </div>
+                <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                  {analytics.dailyOrders && analytics.dailyOrders.length > 0 ? (
+                    analytics.dailyOrders.map((item) => {
+                      const date = new Date(item.date);
+                      const dayName = date.toLocaleDateString("en-US", {
+                        weekday: "short",
+                      });
+                      const dayNumber = date.getDate();
+                      return (
+                        <div
+                          key={item.date}
+                          className="flex items-center justify-between py-2 border-b last:border-b-0"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <div>
+                              <span className="text-sm font-medium">
+                                {dayName}, {dayNumber}
+                              </span>
+                              <span className="text-xs text-muted-foreground ml-2">
+                                {item.orders} orders
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-sm font-bold">
+                            ৳{item.revenue.toLocaleString()}
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No orders for this month
                     </div>
-                  ))}
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -308,38 +363,45 @@ export default function AnalyticsPage() {
                   Orders by Status
                 </CardTitle>
                 <CardDescription>
-                  Distribution of orders by current status
+                  Distribution of orders for {getMonthName(selectedMonth)}{" "}
+                  {selectedYear}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {Object.entries(analytics.ordersByStatus).map(
-                    ([status, count]) => (
-                      <div
-                        key={status}
-                        className="flex items-center justify-between"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <div
-                            className={`w-2 h-2 rounded-full ${
-                              status === "pending"
-                                ? "bg-yellow-500"
-                                : status === "confirmed"
-                                ? "bg-blue-500"
-                                : status === "shipped"
-                                ? "bg-purple-500"
-                                : status === "delivered"
-                                ? "bg-green-500"
-                                : "bg-red-500"
-                            }`}
-                          ></div>
-                          <span className="text-sm font-medium capitalize">
-                            {status}
-                          </span>
+                  {Object.entries(analytics.ordersByStatus).length > 0 ? (
+                    Object.entries(analytics.ordersByStatus).map(
+                      ([status, count]) => (
+                        <div
+                          key={status}
+                          className="flex items-center justify-between"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <div
+                              className={`w-2 h-2 rounded-full ${
+                                status === "pending"
+                                  ? "bg-yellow-500"
+                                  : status === "confirmed"
+                                  ? "bg-blue-500"
+                                  : status === "shipped"
+                                  ? "bg-purple-500"
+                                  : status === "delivered"
+                                  ? "bg-green-500"
+                                  : "bg-red-500"
+                              }`}
+                            ></div>
+                            <span className="text-sm font-medium capitalize">
+                              {status}
+                            </span>
+                          </div>
+                          <div className="text-sm font-bold">{count}</div>
                         </div>
-                        <div className="text-sm font-bold">{count}</div>
-                      </div>
+                      )
                     )
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No orders for this month
+                    </div>
                   )}
                 </div>
               </CardContent>
@@ -355,32 +417,39 @@ export default function AnalyticsPage() {
                   Top Selling Products
                 </CardTitle>
                 <CardDescription>
-                  Best performing products by sales
+                  Top performing products in {getMonthName(selectedMonth)}{" "}
+                  {selectedYear}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {analytics.topProducts.map((product, index) => (
-                    <div
-                      key={product.productId || `product-${index}`}
-                      className="flex items-center justify-between"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center text-xs font-bold">
-                          {index + 1}
-                        </div>
-                        <div>
-                          <div className="font-medium">{product.name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {product.sales} sales
+                  {analytics.topProducts.length > 0 ? (
+                    analytics.topProducts.map((product, index) => (
+                      <div
+                        key={product.productId || `product-${index}`}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center text-xs font-bold">
+                            {index + 1}
+                          </div>
+                          <div>
+                            <div className="font-medium">{product.name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {product.sales} sales
+                            </div>
                           </div>
                         </div>
+                        <div className="text-sm font-bold">
+                          ৳{product.revenue.toLocaleString()}
+                        </div>
                       </div>
-                      <div className="text-sm font-bold">
-                        ৳{product.revenue.toLocaleString()}
-                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No products sold this month
                     </div>
-                  ))}
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -393,7 +462,8 @@ export default function AnalyticsPage() {
                   Orders by Day of Week
                 </CardTitle>
                 <CardDescription>
-                  Average orders per day of the week
+                  Orders by day of week in {getMonthName(selectedMonth)}{" "}
+                  {selectedYear}
                 </CardDescription>
               </CardHeader>
               <CardContent>

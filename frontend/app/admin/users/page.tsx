@@ -346,7 +346,11 @@ export default function AdminUsersPage() {
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <Button type="submit" disabled={loading}>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="bg-blue-500 hover:bg-blue-600"
+                >
                   <Save className="h-4 w-4 mr-2" />
                   {loading ? "Creating..." : "Create Admin User"}
                 </Button>
