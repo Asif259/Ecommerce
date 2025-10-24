@@ -8,12 +8,14 @@ import { Model } from 'mongoose';
 import { Order, OrderDocument } from './order.schema';
 import { CreateOrderDto, UpdateOrderDto, OrderQueryDto } from './dto/order.dto';
 import { ProductsService } from '../products/products.service';
+import { EmailService } from '../utils/email.service';
 
 @Injectable()
 export class OrdersService {
   constructor(
     @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
     private productsService: ProductsService,
+    private emailService: EmailService,
   ) {}
 
   async create(createOrderDto: CreateOrderDto): Promise<Order> {
@@ -43,6 +45,14 @@ export class OrdersService {
     // Update product stock
     for (const item of createOrderDto.items) {
       await this.productsService.updateStock(item.productId, item.quantity);
+    }
+
+    // Send order confirmation email
+    try {
+      await this.emailService.sendOrderConfirmation(savedOrder);
+    } catch (error) {
+      // Log the error but don't fail the order creation
+      console.error('Failed to send order confirmation email:', error);
     }
 
     return savedOrder;
@@ -114,6 +124,13 @@ export class OrdersService {
   }
 
   async update(id: string, updateOrderDto: UpdateOrderDto): Promise<Order> {
+    // Get the current order to track status changes
+    const currentOrder = await this.orderModel.findById(id).exec();
+    if (!currentOrder) {
+      throw new NotFoundException('Order not found');
+    }
+
+    const previousStatus = currentOrder.status;
     const updateData: any = { ...updateOrderDto };
 
     // Handle status changes and set timestamps automatically
@@ -135,6 +152,16 @@ export class OrdersService {
 
     if (!order) {
       throw new NotFoundException('Order not found');
+    }
+
+    // Send status update email if status changed
+    if (updateOrderDto.status && updateOrderDto.status !== previousStatus) {
+      try {
+        await this.emailService.sendOrderStatusUpdate(order, previousStatus);
+      } catch (error) {
+        // Log the error but don't fail the order update
+        console.error('Failed to send order status update email:', error);
+      }
     }
 
     return order;

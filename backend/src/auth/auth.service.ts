@@ -98,4 +98,35 @@ export class AuthService {
   async userCount(): Promise<number> {
     return await this.adminModel.countDocuments();
   }
+
+  async changePassword(
+    email: string,
+    password: string,
+    newPassword: string,
+  ): Promise<void> {
+    console.log('Change password request:', {
+      email,
+      passwordLength: password.length,
+    });
+
+    const user = await this.adminModel.findOne({ email });
+    console.log(
+      'Found user:',
+      user ? { id: user._id, email: user.email } : 'No user found',
+    );
+
+    if (!user) {
+      throw new UnauthorizedException('User with this email does not exist.');
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    console.log('Password validation result:', isPasswordValid);
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials.');
+    }
+    user.passwordHash = await bcrypt.hash(newPassword, 10);
+    await user.save();
+    console.log('Password changed successfully for user:', user.email);
+  }
 }

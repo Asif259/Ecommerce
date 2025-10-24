@@ -91,7 +91,7 @@ export class OrdersController {
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard)
+  @Public()
   findOne(@Param('id') id: string) {
     return this.ordersService.findOne(id);
   }

@@ -112,6 +112,27 @@ export default function ProductDetailPage() {
     }
   };
 
+  const handleBuyNow = () => {
+    if (!product) return;
+
+    if (product.stock > 0 && quantity <= product.stock) {
+      addItem(
+        {
+          _id: product._id,
+          name: product.name,
+          price: product.price,
+          images: product.images,
+          stock: product.stock,
+        },
+        quantity
+      );
+      toast.success(`${product.name} added to cart!`);
+      router.push("/checkout");
+    } else {
+      toast.error("Insufficient stock");
+    }
+  };
+
   const handleToggleFavorite = () => {
     if (!product) return;
 
@@ -377,28 +398,37 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-4">
-              <Button
-                onClick={handleAddToCart}
-                disabled={product.stock === 0 || addedToCart}
-                className="flex-1 bg-[#7F6244] hover:bg-[#6B5139] text-white py-6 text-lg disabled:opacity-50"
-              >
-                <ShoppingCart className="mr-2 h-5 w-5" />
-                {addedToCart ? "Added to Cart!" : "Add to Cart"}
-              </Button>
-              <Button
-                onClick={handleToggleFavorite}
-                variant="outline"
-                className="border-[#D4C5B9] hover:bg-[#FAF8F5] py-6 px-6"
-              >
-                <Heart
-                  className={`h-6 w-6 ${
-                    isFavorite(product._id)
-                      ? "fill-red-500 text-red-500"
-                      : "text-[#7F6244]"
-                  }`}
-                />
-              </Button>
+            <div className="space-y-4">
+              <div className="flex gap-4">
+                <Button
+                  onClick={handleBuyNow}
+                  disabled={product.stock === 0}
+                  className="flex-1 bg-[#3D3D3D] hover:bg-[#2A2A2A] text-white py-6 text-lg disabled:opacity-50"
+                >
+                  Buy Now
+                </Button>
+                <Button
+                  onClick={handleAddToCart}
+                  disabled={product.stock === 0 || addedToCart}
+                  className="flex-1 bg-[#7F6244] hover:bg-[#6B5139] text-white py-6 text-lg disabled:opacity-50"
+                >
+                  <ShoppingCart className="mr-2 h-5 w-5" />
+                  {addedToCart ? "Added to Cart!" : "Add to Cart"}
+                </Button>
+                <Button
+                  onClick={handleToggleFavorite}
+                  variant="outline"
+                  className="border-[#D4C5B9] hover:bg-[#FAF8F5] py-6 px-6"
+                >
+                  <Heart
+                    className={`h-6 w-6 ${
+                      isFavorite(product._id)
+                        ? "fill-red-500 text-red-500"
+                        : "text-[#7F6244]"
+                    }`}
+                  />
+                </Button>
+              </div>
             </div>
 
             {/* Trust Badges */}

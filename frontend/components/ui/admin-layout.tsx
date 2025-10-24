@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Sidebar } from "@/components/ui/sidebar";
+import { Sidebar, MobileHeaderSpacer } from "@/components/ui/sidebar";
 import { useAdminStore } from "@/stores/adminStore";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -114,6 +114,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           isSidebarCollapsed ? "lg:ml-20" : "lg:ml-56"
         }`}
       >
+        <MobileHeaderSpacer />
         <div className="min-h-screen">{children}</div>
       </div>
     </div>

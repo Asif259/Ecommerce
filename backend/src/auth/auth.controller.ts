@@ -12,6 +12,7 @@ import type { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { Public } from './auth.decorators';
+import { ChangePasswordDto } from './dto/login.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -73,5 +74,10 @@ export class AuthController {
   @Get('user-count')
   async getUserCount() {
     return await this.authService.userCount();
+  }
+
+  @Post('change-password')
+  async changePassword(@Body() dto: ChangePasswordDto) {
+    return await this.authService.changePassword(dto.email, dto.password, dto.newPassword);
   }
 }

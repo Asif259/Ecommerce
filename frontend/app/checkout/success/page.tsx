@@ -35,12 +35,10 @@ interface OrderDetails {
   paymentPhone?: string;
   transactionId?: string;
   shippingAddress: {
-    firstName: string;
-    lastName: string;
+    fullName: string;
     address: string;
-    city: string;
-    state: string;
-    zipCode: string;
+    upazila: string;
+    district: string;
     phone: string;
   };
   items: Array<{
@@ -223,13 +221,12 @@ export default function CheckoutSuccessPage() {
               <CardContent>
                 <div className="space-y-2 text-[#5A5A5A]">
                   <p className="font-medium">
-                    {order.shippingAddress.firstName}{" "}
-                    {order.shippingAddress.lastName}
+                    {order.shippingAddress.fullName}
                   </p>
                   <p>{order.shippingAddress.address}</p>
                   <p>
-                    {order.shippingAddress.city}, {order.shippingAddress.state}{" "}
-                    {order.shippingAddress.zipCode}
+                    {order.shippingAddress.upazila},{" "}
+                    {order.shippingAddress.district}
                   </p>
                   <p>{order.shippingAddress.phone}</p>
                 </div>

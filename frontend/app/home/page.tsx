@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,6 +38,7 @@ import {
   getCategories as getCategoriesAPI,
   Category,
 } from "@/utils/categories";
+import { getFeaturedReviews, Review } from "@/utils/reviews";
 import { useClient } from "@/hooks/useClient";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCartStore } from "@/stores/cartStore";
@@ -44,12 +46,14 @@ import { useFavoritesStore } from "@/stores/favoritesStore";
 import { Footer } from "@/components/ui/footer";
 
 export default function HomePage() {
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryProductCounts, setCategoryProductCounts] = useState<
     Record<string, number>
   >({});
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [autoPlay, setAutoPlay] = useState(true);
@@ -63,14 +67,17 @@ export default function HomePage() {
     isFavorite,
   } = useFavoritesStore();
 
+  // Use dynamic reviews from backend, fallback to empty array if none available
+  const testimonials = reviews.length > 0 ? reviews : [];
+
   useEffect(() => {
     fetchData();
   }, []);
 
   useEffect(() => {
-    if (autoPlay) {
+    if (autoPlay && testimonials.length > 0) {
       testimonialRef.current = setInterval(() => {
-        setActiveTestimonial((prev) => (prev + 1) % 3);
+        setActiveTestimonial((prev) => (prev + 1) % testimonials.length);
       }, 5000);
     }
     return () => {
@@ -78,20 +85,26 @@ export default function HomePage() {
         clearInterval(testimonialRef.current);
       }
     };
-  }, [autoPlay]);
+  }, [autoPlay, testimonials.length]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [allProductsResponse, featuredResponse, categoriesData] =
-        await Promise.all([
-          getProducts({ limit: 12, isActive: true }),
-          getFeaturedProducts(8),
-          getCategoriesAPI(),
-        ]);
+      const [
+        allProductsResponse,
+        featuredResponse,
+        categoriesData,
+        reviewsData,
+      ] = await Promise.all([
+        getProducts({ limit: 12, isActive: true }),
+        getFeaturedProducts(8),
+        getCategoriesAPI(),
+        getFeaturedReviews(3),
+      ]);
 
       setProducts(allProductsResponse.products);
       setFeaturedProducts(featuredResponse.products || featuredResponse);
+      setReviews(reviewsData);
 
       // Take first 8 categories for homepage
       const limitedCategories = categoriesData.slice(0, 12);
@@ -143,6 +156,25 @@ export default function HomePage() {
     }
   };
 
+  const handleBuyNow = (product: Product) => {
+    if (product.stock > 0) {
+      addItem(
+        {
+          _id: product._id,
+          name: product.name,
+          price: product.price,
+          images: product.images,
+          stock: product.stock,
+        },
+        1
+      );
+      toast.success(`${product.name} added to cart!`);
+      router.push("/checkout");
+    } else {
+      toast.error("Product is out of stock");
+    }
+  };
+
   const handleToggleFavorite = (product: Product) => {
     if (isFavorite(product._id)) {
       removeFromFavorites(product._id);
@@ -158,49 +190,8 @@ export default function HomePage() {
     }
   };
 
-  const testimonials = [
-    {
-      id: 1,
-      content:
-        "Absolutely love the quality and design! The furniture pieces transformed my living room into a cozy sanctuary.",
-      author: "Sarah Johnson",
-      location: "New York, NY",
-      rating: 5,
-    },
-    {
-      id: 2,
-      content:
-        "Exceptional customer service and fast delivery. The wall art pieces are stunning and exactly what I was looking for!",
-      author: "Michael Chen",
-      location: "San Francisco, CA",
-      rating: 5,
-    },
-    {
-      id: 3,
-      content:
-        "Beautiful products that make my house feel like home. I've recommended them to all my friends!",
-      author: "Emily Davis",
-      location: "Austin, TX",
-      rating: 5,
-    },
-  ];
-
   return (
     <div className="min-h-screen bg-[#FAF8F5]">
-      {/* Cart Notification Toast */}
-      <AnimatePresence>
-        {addedToCart && (
-          <motion.div
-            initial={{ opacity: 0, y: -50, x: "-50%" }}
-            animate={{ opacity: 1, y: 20, x: "-50%" }}
-            exit={{ opacity: 0, y: -50, x: "-50%" }}
-            className="fixed top-0 left-1/2 z-50 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2"
-          >
-            <ShoppingCart className="h-5 w-5" />
-            <span className="font-semibold">Added to cart!</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Enhanced Hero Section with Landscape Design */}
       <motion.div
@@ -495,28 +486,46 @@ export default function HomePage() {
                           </span>
                         </div>
                       </div>
-                      <motion.div
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.97 }}
-                      >
-                        <Button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleAddToCart(product);
-                          }}
-                          disabled={
-                            product.stock === 0 || addedToCart === product._id
-                          }
-                          className="w-full bg-[#7F6244] hover:bg-[#6B5139] text-white font-semibold hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                      <div className="space-y-2">
+                        <motion.div
+                          whileHover={{ scale: 1.03 }}
+                          whileTap={{ scale: 0.97 }}
                         >
-                          <ShoppingCart className="mr-2 h-4 w-4" />
-                          {addedToCart === product._id
-                            ? "Added!"
-                            : product.stock === 0
-                            ? "Out of Stock"
-                            : "Add to Cart"}
-                        </Button>
-                      </motion.div>
+                          <Button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleBuyNow(product);
+                            }}
+                            disabled={product.stock === 0}
+                            className="w-full bg-[#3D3D3D] hover:bg-[#2A2A2A] text-white font-semibold hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Buy Now
+                          </Button>
+                        </motion.div>
+                        <motion.div
+                          whileHover={{ scale: 1.03 }}
+                          whileTap={{ scale: 0.97 }}
+                        >
+                          <Button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleAddToCart(product);
+                            }}
+                            disabled={
+                              product.stock === 0 || addedToCart === product._id
+                            }
+                            variant="outline"
+                            className="w-full border-[#7F6244] text-[#7F6244] hover:bg-[#7F6244] hover:text-white font-semibold hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <ShoppingCart className="mr-2 h-4 w-4" />
+                            {addedToCart === product._id
+                              ? "Added!"
+                              : product.stock === 0
+                              ? "Out of Stock"
+                              : "Add to Cart"}
+                          </Button>
+                        </motion.div>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
@@ -585,132 +594,136 @@ export default function HomePage() {
       </motion.div>
 
       {/* Enhanced Testimonials Section with Carousel & Framer Motion */}
-      <motion.div
-        initial={{ opacity: 0, y: 50 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-100px" }}
-        transition={{ duration: 0.6 }}
-        className="py-20 bg-gradient-to-b from-white to-[#FAF8F5]"
-      >
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-[#3D3D3D] mb-4">
-              What Our Customers Say
-            </h2>
-            <p className="text-[#5A5A5A] text-lg">
-              Real stories from happy homeowners
-            </p>
-          </div>
-
-          <div className="relative">
-            <div className="overflow-hidden rounded-2xl">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeTestimonial}
-                  initial={{ opacity: 0, x: 100 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -100 }}
-                  transition={{ duration: 0.5 }}
-                  className="bg-white rounded-2xl shadow-xl border border-[#D4C5B9]/20"
-                >
-                  <CardContent className="p-12">
-                    <div className="flex items-center mb-6">
-                      {[...Array(testimonials[activeTestimonial].rating)].map(
-                        (_, i) => (
-                          <Star
-                            key={i}
-                            className="h-6 w-6 text-[#D4C5B9] fill-current"
-                          />
-                        )
-                      )}
-                    </div>
-                    <p className="text-2xl text-[#5A5A5A] mb-8 leading-relaxed italic">
-                      "{testimonials[activeTestimonial].content}"
-                    </p>
-                    <div className="flex items-center">
-                      <div className="w-16 h-16 bg-gradient-to-br from-[#9CA986]/20 to-[#D4C5B9]/30 rounded-full flex items-center justify-center mr-6">
-                        <span className="text-2xl font-bold text-[#7F6244]">
-                          {testimonials[activeTestimonial].author.charAt(0)}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="font-semibold text-xl text-[#3D3D3D]">
-                          {testimonials[activeTestimonial].author}
-                        </p>
-                        <p className="text-lg text-[#8B7E6A]">
-                          {testimonials[activeTestimonial].location}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </motion.div>
-              </AnimatePresence>
+      {testimonials.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="py-20 bg-gradient-to-b from-white to-[#FAF8F5]"
+        >
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl font-bold text-[#3D3D3D] mb-4">
+                What Our Customers Say
+              </h2>
+              <p className="text-[#5A5A5A] text-lg">
+                Real stories from happy homeowners
+              </p>
             </div>
 
-            {/* Carousel Controls */}
-            <div className="flex items-center justify-center mt-8 gap-4">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => {
-                  setAutoPlay(false);
-                  setActiveTestimonial(
-                    (prev) =>
-                      (prev - 1 + testimonials.length) % testimonials.length
-                  );
-                }}
-                className="border-[#D4C5B9] text-[#7F6244] hover:bg-[#9CA986]/10"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-
-              <div className="flex gap-2">
-                {testimonials.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => {
-                      setAutoPlay(false);
-                      setActiveTestimonial(index);
-                    }}
-                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                      index === activeTestimonial
-                        ? "bg-[#7F6244] w-8"
-                        : "bg-[#D4C5B9] hover:bg-[#9CA986]"
-                    }`}
-                  />
-                ))}
+            <div className="relative">
+              <div className="overflow-hidden rounded-2xl">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeTestimonial}
+                    initial={{ opacity: 0, x: 100 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -100 }}
+                    transition={{ duration: 0.5 }}
+                    className="bg-white rounded-2xl shadow-xl border border-[#D4C5B9]/20"
+                  >
+                    <CardContent className="p-12">
+                      <div className="flex items-center mb-6">
+                        {[...Array(testimonials[activeTestimonial].rating)].map(
+                          (_, i) => (
+                            <Star
+                              key={i}
+                              className="h-6 w-6 text-[#D4C5B9] fill-current"
+                            />
+                          )
+                        )}
+                      </div>
+                      <p className="text-2xl text-[#5A5A5A] mb-8 leading-relaxed italic">
+                        "{testimonials[activeTestimonial].content}"
+                      </p>
+                      <div className="flex items-center">
+                        <div className="w-16 h-16 bg-gradient-to-br from-[#9CA986]/20 to-[#D4C5B9]/30 rounded-full flex items-center justify-center mr-6">
+                          <span className="text-2xl font-bold text-[#7F6244]">
+                            {testimonials[activeTestimonial].author.charAt(0)}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-xl text-[#3D3D3D]">
+                            {testimonials[activeTestimonial].author}
+                          </p>
+                          <p className="text-lg text-[#8B7E6A]">
+                            {testimonials[activeTestimonial].location}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </motion.div>
+                </AnimatePresence>
               </div>
 
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => {
-                  setAutoPlay(false);
-                  setActiveTestimonial(
-                    (prev) => (prev + 1) % testimonials.length
-                  );
-                }}
-                className="border-[#D4C5B9] text-[#7F6244] hover:bg-[#9CA986]/10"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </Button>
+              {/* Carousel Controls */}
+              {testimonials.length > 1 && (
+                <div className="flex items-center justify-center mt-8 gap-4">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      setAutoPlay(false);
+                      setActiveTestimonial(
+                        (prev) =>
+                          (prev - 1 + testimonials.length) % testimonials.length
+                      );
+                    }}
+                    className="border-[#D4C5B9] text-[#7F6244] hover:bg-[#9CA986]/10"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </Button>
 
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setAutoPlay(!autoPlay)}
-                className="border-[#D4C5B9] text-[#7F6244] hover:bg-[#9CA986]/10 ml-4"
-              >
-                {autoPlay ? (
-                  <Pause className="h-5 w-5" />
-                ) : (
-                  <Play className="h-5 w-5" />
-                )}
-              </Button>
+                  <div className="flex gap-2">
+                    {testimonials.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          setAutoPlay(false);
+                          setActiveTestimonial(index);
+                        }}
+                        className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                          index === activeTestimonial
+                            ? "bg-[#7F6244] w-8"
+                            : "bg-[#D4C5B9] hover:bg-[#9CA986]"
+                        }`}
+                      />
+                    ))}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      setAutoPlay(false);
+                      setActiveTestimonial(
+                        (prev) => (prev + 1) % testimonials.length
+                      );
+                    }}
+                    className="border-[#D4C5B9] text-[#7F6244] hover:bg-[#9CA986]/10"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setAutoPlay(!autoPlay)}
+                    className="border-[#D4C5B9] text-[#7F6244] hover:bg-[#9CA986]/10 ml-4"
+                  >
+                    {autoPlay ? (
+                      <Pause className="h-5 w-5" />
+                    ) : (
+                      <Play className="h-5 w-5" />
+                    )}
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
 
       <Footer />
     </div>

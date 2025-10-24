@@ -19,6 +19,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Image as ImageIcon,
+  Star,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -28,6 +29,11 @@ interface SidebarProps {
   onLogout: () => void | Promise<void>;
   isCollapsed: boolean;
   onToggleCollapse: (collapsed: boolean) => void;
+}
+
+// Utility component to add proper spacing for mobile header
+export function MobileHeaderSpacer() {
+  return <div className="h-16 lg:h-0" />;
 }
 
 const navigationItems = [
@@ -50,6 +56,11 @@ const navigationItems = [
     name: "Orders",
     href: "/admin/orders",
     icon: ShoppingCart,
+  },
+  {
+    name: "Reviews",
+    href: "/admin/reviews",
+    icon: Star,
   },
   {
     name: "Analytics",
@@ -76,6 +87,38 @@ export function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
+  const [isTablet, setIsTablet] = React.useState(false);
+
+  // Handle window resize for better tablet behavior
+  React.useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      setIsTablet(width >= 768 && width < 1024);
+
+      // Close mobile sidebar on desktop
+      if (width >= 1024) {
+        setIsMobileOpen(false);
+      }
+    };
+
+    handleResize(); // Initial check
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Handle escape key to close mobile sidebar
+  React.useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isMobileOpen) {
+        setIsMobileOpen(false);
+      }
+    };
+
+    if (isMobileOpen) {
+      document.addEventListener("keydown", handleEscape);
+      return () => document.removeEventListener("keydown", handleEscape);
+    }
+  }, [isMobileOpen]);
 
   const toggleSidebar = () => {
     onToggleCollapse(!isCollapsed);
@@ -90,32 +133,61 @@ export function Sidebar({
       {/* Mobile overlay */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
 
-      {/* Mobile menu button */}
-      <Button
-        variant="outline"
-        size="sm"
-        className="fixed top-4 left-4 z-50 lg:hidden"
-        onClick={toggleMobileSidebar}
-      >
-        <Menu className="h-4 w-4" />
-      </Button>
+      {/* Mobile header bar with menu button */}
+      <div className="fixed top-0 left-0 right-0 z-50 lg:hidden bg-white border-b border-gray-200 shadow-sm">
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center space-x-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="p-2 hover:bg-gray-100"
+              onClick={toggleMobileSidebar}
+              aria-label="Toggle navigation menu"
+              aria-expanded={isMobileOpen}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            <div className="flex items-center space-x-2">
+              <img
+                src="/logo.png"
+                alt="Logo"
+                className="w-6 h-6 object-contain"
+              />
+              <span className="text-lg font-bold text-[#7F6244]">Admin</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed left-0 top-0 z-40 h-full bg-white border-r border-gray-200 transition-all duration-300 ease-in-out",
-          isCollapsed ? "w-20" : "w-56",
-          isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          "fixed left-0 z-50 bg-white border-r border-gray-200 transition-all duration-300 ease-in-out shadow-lg",
+          // Desktop (lg+): always show, position based on collapsed state
+          "lg:translate-x-0 lg:top-0 lg:h-full",
+          // Mobile/Tablet: positioned below header bar
+          "top-16 h-[calc(100vh-4rem)] lg:top-0 lg:h-full",
+          // Mobile: show when open, hide when closed
+          isMobileOpen ? "translate-x-0" : "-translate-x-full",
+          // Width based on collapsed state and screen size
+          isCollapsed ? "w-16 md:w-16 lg:w-16" : "w-56 md:w-56 lg:w-56"
         )}
+        role="navigation"
+        aria-label="Main navigation"
       >
         <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          {/* Desktop Header - hidden on mobile */}
+          <div
+            className={cn(
+              "hidden lg:flex items-center border-b border-gray-200",
+              isCollapsed ? "justify-center p-3" : "justify-between p-4"
+            )}
+          >
             {!isCollapsed ? (
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 flex items-center justify-center">
@@ -128,7 +200,13 @@ export function Sidebar({
                 <span className="text-lg font-bold text-[#7F6244]">Admin</span>
               </div>
             ) : (
-              <div className="w-8 h-8" />
+              <div className="w-8 h-8 flex items-center justify-center">
+                <img
+                  src="/logo.png"
+                  alt="Logo"
+                  className="w-full h-full object-contain"
+                />
+              </div>
             )}
 
             {/* Desktop collapse/expand button */}
@@ -136,29 +214,20 @@ export function Sidebar({
               variant="ghost"
               size="sm"
               onClick={toggleSidebar}
-              className="hidden lg:flex"
+              className="hover:bg-gray-100"
             >
               {isCollapsed ? (
-                <Menu className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4" />
               ) : (
                 <ChevronLeft className="h-4 w-4" />
               )}
             </Button>
-
-            {/* Mobile close button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleMobileSidebar}
-              className="lg:hidden"
-            >
-              <X className="h-4 w-4" />
-            </Button>
           </div>
 
+
           {/* Navigation */}
-          <ScrollArea className="flex-1 px-4 py-4">
-            <nav className="space-y-2">
+          <ScrollArea className="flex-1">
+            <nav className={cn("space-y-1", isCollapsed ? "p-2" : "p-4")}>
               {navigationItems.map((item) => {
                 const isActive = pathname === item.href;
                 return (
@@ -166,18 +235,25 @@ export function Sidebar({
                     key={item.name}
                     href={item.href}
                     className={cn(
-                      "flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                      "flex items-center rounded-lg text-sm font-medium transition-all duration-200",
+                      "hover:scale-[1.02] active:scale-[0.98]",
                       isActive
-                        ? "bg-blue-50 text-blue-700 border border-blue-200"
+                        ? "bg-blue-50 text-blue-700 border border-blue-200 shadow-sm"
                         : "text-gray-700 hover:bg-gray-50 hover:text-gray-900",
-                      isCollapsed && "justify-center"
+                      isCollapsed ? "justify-center p-3" : "px-3 py-2.5"
                     )}
                     onClick={() => setIsMobileOpen(false)}
+                    title={isCollapsed ? item.name : undefined}
                   >
                     <item.icon
-                      className={cn("size-5", !isCollapsed && "mr-3")}
+                      className={cn(
+                        "flex-shrink-0",
+                        isCollapsed ? "size-5" : "size-5 mr-3"
+                      )}
                     />
-                    {!isCollapsed && <span>{item.name}</span>}
+                    {!isCollapsed && (
+                      <span className="truncate">{item.name}</span>
+                    )}
                   </Link>
                 );
               })}
@@ -185,7 +261,12 @@ export function Sidebar({
           </ScrollArea>
 
           {/* User section */}
-          <div className="p-4 border-t border-gray-200">
+          <div
+            className={cn(
+              "border-t border-gray-200",
+              isCollapsed ? "p-2" : "p-4"
+            )}
+          >
             {!isCollapsed && user?.email && (
               <div className="mb-3">
                 <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">
@@ -201,17 +282,18 @@ export function Sidebar({
               size="sm"
               onClick={onLogout}
               className={cn(
-                "w-full justify-start",
-                isCollapsed && "justify-center px-2"
+                "w-full transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]",
+                isCollapsed ? "justify-center p-3" : "justify-start px-3 py-2.5"
               )}
+              title={isCollapsed ? "Logout" : undefined}
             >
               <LogOut
                 className={cn(
-                  isCollapsed ? "size-6" : "size-5",
-                  !isCollapsed && "mr-2"
+                  "flex-shrink-0",
+                  isCollapsed ? "size-5" : "size-5 mr-2"
                 )}
               />
-              {!isCollapsed && <span>Logout</span>}
+              {!isCollapsed && <span className="truncate">Logout</span>}
             </Button>
           </div>
         </div>
